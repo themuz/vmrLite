@@ -1,0 +1,8 @@
+<fieldset>
+    <legend>Example - <span vm-text="title">Ticket Detail</span></legend>
+    <div vm-with="model">
+        <label>Record ID:</label> <b vm-text="id ? id : 'NEW'"></b> <br />
+        <label>Details:</label> <b vm-text="name + ' (' + code + ')'"></b>
+
+    </div>
+</fieldset>

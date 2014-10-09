@@ -1,0 +1,8 @@
+<fieldset>
+    <legend>Example - <span vm-text="title">Alt View</span> <small>(see ..Alt...html)</small></legend>
+    <div vm-with="model">
+        <b>Details:</b> <i vm-text="name + ' (' + code + ')'"></i> 
+        #<b vm-text="id ? id : 'NEW'"> </b> 
+        $<span vm-text="price"></span>
+    </div>
+</fieldset>

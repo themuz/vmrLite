@@ -1,0 +1,59 @@
+div.vmr-modal-background {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    cursor: not-allowed;
+    z-index: 100; /* high z-index */
+    background: hsla(206, 33%, 24%,0.5);
+    text-align: center;
+}
+
+div.vmr-modal-window {
+    display: inline-block;
+    min-width: 32em;    
+    padding: 4px;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: 6px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.5);
+    margin-top: 2%;
+    cursor: default;
+    text-align: left;
+    z-index: 101; /* high z-index */    
+}
+
+div.ZZShowModalVM-title-bar {
+    padding: 6px;
+    border-bottom: 1px solid #c0c0c0;
+}
+
+div.ZZShowModalVM-title-bar > .title {
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+
+div.ZZShowModalVM-title-bar > a.x {
+    float: right;
+    padding: 0;
+    padding-left: 4px;
+    border-left: 1px solid #c0c0c0;
+    color: #aaa;
+    font-size: 1em;
+    text-decoration: none;
+    font-weight: bold;    
+}
+
+div.ZZShowModalVM-title-bar > a.x:hover {
+    color: black;	
+}
+
+div.ZZShowModalVM-panel-footer {
+    padding-top: 4px;
+    background-color: #f7f7f9;
+    border-top: 1px solid #c0c0c0;
+}

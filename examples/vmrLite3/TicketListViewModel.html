@@ -1,0 +1,17 @@
+<fieldset >
+    <legend>Example - Ticket List <a href="#" vm-onclick="onClickAdd">[Add]</a></legend>
+    <table>
+        <tr><th>Name
+                <small style="font-weight:normal" vm-text="getSortSym()"></small>
+                <a vm-onclick="onClickSortName" style="font-size: 0.6em" href="#">[sort]</a>
+            </th>
+            <th>Code</th>
+            <th>Price</th>
+        </tr>
+        <tr vm-each="modelList" vm-id="id">
+            <td><a vm-text="name" vm-onclick="onClickSelect" href="#"></td>
+            <td vm-text="code">N</td>
+            <td vm-text="price">P</td>
+        </tr>
+    </table>
+</fieldset>

@@ -1,0 +1,11 @@
+<ul class="vmr-tab-bar">
+    <li vm-selected="selectedIndex==index" vm-onclick="onClickSelect" vm-each="inners">
+        <a href="#" vm-text="title" title="Click to select">vmrTabbedForms-title</a>
+        <a href="#" class="vmr-title-bar-button" vm-onclick="onClickClose">&times;</a>
+    </li>
+</ul>
+<div class="vmr-window bottom">
+    <div class="inner" vm-display="selectedIndex==index" vm-each="inners">
+        vmrTabbedForms-vmr-inner
+    </div>
+</div>

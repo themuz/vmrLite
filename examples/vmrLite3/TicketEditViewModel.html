@@ -1,0 +1,11 @@
+<fieldset>
+    <legend>Example 2 - Ticket Edit </legend>
+    <div vm-with="model">
+        <label>Name:</label> <input vm-value="name" /><br />
+        <label>Code:</label> <input vm-value="code" size="3" /><br />
+        <label>Price:</label> <input vm-value="price"  size="5" />
+        <hr />
+        <button vm-onclick="onClickSave">Save</button>
+        <button vm-onclick="onClickRevert">Revert</button>
+    </div>
+</fieldset>

@@ -1,0 +1,16 @@
+<div style="text-align: center">
+    <p vm-text="message" style="padding: 6px">Message...</p>
+    <div class="vmr-panel footer">
+    <button vm-onclick="onClickButton" data-button="yes" vm-display="!!buttons.match(/yes/i)">&nbsp;&nbsp;&nbsp;Yes&nbsp;&nbsp;</button>
+    <button vm-onclick="onClickButton" data-button="no" vm-display="!!buttons.match(/no/i)">&nbsp;&nbsp;&nbsp;No&nbsp;&nbsp;</button>
+    <button vm-onclick="onClickButton" data-button="ok" vm-display="!!buttons.match(/ok/i)">&nbsp;&nbsp;&nbsp;OK&nbsp;&nbsp;</button>
+    <button vm-onclick="onClickButton" data-button="abort" vm-display="!!buttons.match(/abort/i)">&nbsp;&nbsp;&nbsp;Abort&nbsp;&nbsp;</button>
+    <button vm-onclick="onClickButton" data-button="retry" vm-display="!!buttons.match(/retry/i)">&nbsp;&nbsp;&nbsp;Retry&nbsp;&nbsp;</button>
+    <button vm-onclick="onClickButton" data-button="ignore" vm-display="!!buttons.match(/ignore/i)">&nbsp;&nbsp;&nbsp;Ignore&nbsp;&nbsp;</button>
+    &nbsp;&nbsp;<a href="#" vm-onclick="onClickButton" data-button="cancel" vm-display="!!buttons.match(/cancel/i)">Cancel</a>&nbsp;
+    </div>
+</div>
+
+
+
+

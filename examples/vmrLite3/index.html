@@ -1,0 +1,77 @@
+<!-- HTML5 DOCTYPE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Example 2</title>
+<script src="../../vmrLite.js" type="text/javascript"></script>
+<script src="../../requireLite.js" type="text/javascript"></script>
+<script src="./TicketModel.js" type="text/javascript"></script>
+
+<style type="text/css" media="all">
+
+body {
+    background-color: white;
+    font-family: 	Verdana,Arial,sans-serif;
+    font-size: 12pt;
+	padding: 1em;
+}
+select, input {font-size: 1.1em }
+section {
+    display: inline-block;
+    width: 30%;
+    margin: 0;
+    padding: 1em;
+    min-width: 256px;
+    vertical-align: top;
+}
+
+
+</style>
+
+<script language="JavaScript" type="text/JavaScript">
+
+/* global window, console, document, module, XMLHttpRequest, requireLite, vmrLite, TicketModel */
+
+function injectPartialTicketEdit() {
+    var ViewModel = requireLite('TicketEditViewModel');
+    var vm = new ViewModel().show('ticketEditContainer');    
+    //vmrLite.partial({url: '_ticketEdit', container: 'ticketEditContainer'});
+}
+
+function closePartialTicketEdit() {
+    vmrLite.triggerEvent('ticketEditContainer','close',null );
+}
+
+function onBodyLoad() {
+    //injectPartialTicketEdit();
+    var ViewModel = requireLite('TicketListViewModel');
+    var vm = new ViewModel().show('ticketListContainer');
+
+    ViewModel = requireLite('TicketDetailViewModel');
+    vm = new ViewModel().show('ticketDetailContainer1');
+
+    ViewModel = requireLite('TicketDetailViewModel');
+    vm = new ViewModel({ altView : true }).show('ticketDetailContainer2');
+}
+
+</script>
+
+</head>
+<body onload="onBodyLoad();">
+<h4>EXAMPLE - using plain vmrLite.render and renderLite (with messaging based ViewModel)</h4>
+<small>Click to view a Ticket, 
+    <button onclick="injectPartialTicketEdit()">Show Edit</button>
+    <button onclick="closePartialTicketEdit()">Close Edit</button>
+</small><br />
+<section id="ticketListContainer">
+    // ticketListContainer
+</section><section id="ticketEditContainer">
+    // ticketEditContainer
+</section><section>
+  <div  id="ticketDetailContainer1">// ticketDetailContainer</div>
+  <div  id="ticketDetailContainer2">// ticketDetailContainer</div>
+</section>
+</body>
+
+</html>

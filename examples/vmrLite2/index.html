@@ -1,0 +1,136 @@
+<!-- HTML5 DOCTYPE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Example 2</title>
+<script src="../../vmrLite.js" type="text/javascript"></script>
+<style type="text/css" media="all">
+
+body {
+    background-color: white;
+    font-family: 	Verdana,Arial,sans-serif;
+    font-size: 12pt;
+	padding: 3em;
+}
+select, input {font-size: 1.1em }
+</style>
+
+<script language="JavaScript" type="text/JavaScript">
+
+
+/* global window, console, document, module, XMLHttpRequest, vmrLite */
+
+function Ticket(name,code,price) {
+    "use strict";
+    this.name = name;
+    this.code = code;
+    this.price = price;
+}
+
+Ticket.prototype.cmp = function(witht,attrib) {
+    "use strict";
+    if ( !attrib )  attrib = 'name';
+    var n1 = this[attrib].toLowerCase();
+    var n2 = witht[attrib].toLowerCase();
+    return ( n1<n2 ? -1 : ( n1==n2 ? 0 : 1 ));
+};
+
+
+// see: http://ie.microsoft.com/TestDrive/HTML5/ECMAScript5Array/Default.html
+function TicketsViewModel() {
+    "use strict";
+    this.container = null;
+	this.tickets = [
+		new Ticket("Economy", "E", 199.95 ),
+		new Ticket("Business", "B",  449.22 ),
+		new Ticket("First Class", "F", 1199.99 )
+	];
+    this.sortorder = 0;
+    this.editingTicket = this.tickets[1];
+    // Add sync/render for convenience
+	this.sync = function() { vmrLite.sync( this.container, this ); };
+    this.render = function() { vmrLite.render( this.container, this ); };
+    this.show = function(container) { 
+        this.container = container;
+        vmrLite.render( this.container, this );
+    };
+
+    // Instance functions to handle events and to keep example simple
+	this.onClickSave = function(ev) {
+        this.sync();
+        if ( this.tickets.indexOf(this.editingTicket) < 0 ) // Add to list, if new
+            this.tickets.unshift(this.editingTicket);
+        // Validate data, persist data and re-render .. (for now just call render())
+        this.render();
+        ev.preventDefault(); ev.stopPropagation();
+    };
+    this.onClickSortName = function(ev) {
+        this.sortorder = (-1*this.sortorder);
+        if ( !this.sortorder ) this.sortorder =  1;
+        this.tickets.sort( function(a,b) {
+              return a.cmp(b) * this.sortorder;
+            }.bind(this) );
+        this.render();
+    };
+    this.onClickRevert = function(ev) {
+        this.render();
+        ev.preventDefault(); ev.stopPropagation();
+    };
+    this.onClickAdd = function(ev) {
+        this.editingTicket = new Ticket('New Ticket','N',0.00);
+        this.render();
+        ev.preventDefault(); ev.stopPropagation();
+    };
+    this.onClickSelect = function(ev) {
+        // ev.target or its parent will have a Elememnt with attribute of "index" find it.
+        this.editingTicket = this.tickets[vmrLite.closestIndex(ev.target)];
+        this.render();
+        ev.preventDefault(); ev.stopPropagation();
+    };
+	return this; // Not needed, as this is the default.
+}
+
+function onBodyLoad() {
+	(new TicketsViewModel()).show(document.getElementById('ticketsView'));
+}
+
+</script>
+
+</head>
+
+<body onload="onBodyLoad()">
+<h4>example2 - using plain vmrLite.render</h4>
+<section id="ticketsView">
+
+    <fieldset >
+        <legend>Example 2 - List</legend>
+        <table>
+            <tr>
+                <th>Name <a vm-onclick="onClickSortName" style="font-size: 0.6em" href="#">[sort]</a></th>
+                <th>Code</th>
+                <th>Price</th>
+            </tr>
+            <tr vm-each="tickets">
+                <td><a vm-text="name" vm-onclick="onClickSelect" href="#"></td>
+                <td vm-text="code">N</td>
+                <td vm-text="price">P</td>
+            </tr>
+        </table>
+    </fieldset>
+    <br /><br />
+    <fieldset >
+        <legend>Example 2 - View <a href="#" vm-onclick="onClickAdd">[Add]</a></legend>
+        <div vm-with="editingTicket">
+            <label>Name</label><input vm-value="name" />
+            <label>Code</label><input vm-value="code" size="3" />
+            <label>Price</label><input vm-value="price"  size="5" />
+            <button vm-onclick="onClickSave">Save</button>
+            <button vm-onclick="render">Revert</button>
+
+        </div>
+    </fieldset>
+</section>
+</body>
+
+</html>

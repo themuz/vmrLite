@@ -1,0 +1,82 @@
+<!-- HTML5 DOCTYPE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Example 2</title>
+    <script src="../../vmrLite.js" type="text/javascript"></script>
+    <script src="../../vmrLite-partial.js" type="text/javascript"></script>
+    <script src="./TicketModel.js" type="text/javascript"></script>
+
+<style type="text/css" media="all">
+
+
+a[vm-sort] {
+    text-decoration: none;
+
+    font-size: 0.8em;
+}
+a[vm-sort]:after {
+    content: ' (-)';
+    font-size: 0.6em;
+}
+
+a.asc:after {
+    content: ' (v)';
+}
+
+a.desc:after {
+    content: ' (^)';
+}
+
+
+</style>
+
+<script language="JavaScript" type="text/JavaScript">
+
+"use strict";
+
+vmrLite.tagFns['sort'] = function (tag,elem,viewModelObj) {
+    // tag.name='sort'
+    // tag.param=''
+    // tag.value='array' (expression that evals to the object to sort)
+    // tag.result=array (the array to sort)
+    var sortby=elem.getAttribute('sortby');
+    var sortArray=tag.result;
+
+    var onClickFn=function(ev) {
+        // alert('SORT ' + typeof(sortArray) +  '  by ' + sortby );
+        var sortorder=1;
+        if ( ev.target.classList.contains('asc') )
+            sortorder=(-1); // Change to desc
+
+        // Pain IE10/11 does not have toggle with 2nd bool param !!
+        ev.target.classList.remove(( sortorder < 0 ) ? 'asc' : 'desc' );
+        ev.target.classList.add(( sortorder > 0 ) ? 'asc' : 'desc' );
+
+        sortArray.sort( function(a,b) {
+            return (a[sortby] < b[sortby]) ? -1*sortorder : ( (a[sortby] == b[sortby]) ? 0 : sortorder );
+        });
+        viewModelObj.render();
+        ev.preventDefault(); ev.stopPropagation();
+    };
+
+    elem['onclick'] = onClickFn;
+};
+
+
+// Code starts here
+
+function onBodyLoad() {
+
+};
+	
+</script>
+
+</head>
+<body onload="onBodyLoad();">
+
+
+</body>
+
+</html>

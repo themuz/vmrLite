@@ -1,0 +1,83 @@
+<!-- HTML5 DOCTYPE -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Example 1</title>
+<script src="../../vmrLite.js" type="text/javascript"></script>
+<style type="text/css" media="all">
+
+body {
+    background-color: white;
+    font-family: 	Verdana,Arial,sans-serif;
+    font-size: 12pt;
+	padding: 3em;
+}
+select {font-size: 1.1em }
+</style>
+
+<script language="JavaScript" type="text/JavaScript">
+
+
+/* global window, console, document, module, XMLHttpRequest, vmrLite */
+
+function TicketsViewModel(config) {
+	"use strict";	
+    this.container = null;
+	this.tickets = [
+		{ name: "Economy", code: "E", price: 199.95 },
+		{ name: "Business", code: "B",  price: 449.22 },
+		{ name: "First Class", code: "F", price: 1199.99 }
+	];
+    this.chosenTicketCode = null;
+    // Add sync/render for convenience
+	this.sync = function() { vmrLite.sync( this.container, this ); };
+	this.render = function() { vmrLite.render( this.container, this ); };
+    this.show = function(container) { 
+        this.container = container;
+        vmrLite.render( this.container, this );
+    };	
+    // Instance functions to handle events
+	this.getChosenTicketDetails = function () {
+        if ( !this.chosenTicketCode ) return null;
+        // Watch out, Array.filter needs "this" as 2nd argument, otherwise this is "undefined"  !!
+        return this.tickets.filter( function(e)  { return e.code == this.chosenTicketCode; }, this )[0];
+    };
+	this.onClickChooseTicket = function(ev) {
+        this.sync(); // Get the data, Only 1 input element, to KISS
+	    // Validate data, persist data, code here ...
+        this.render(); };
+	this.onClickResetTicket = function(ev) {
+        this.chosenTicketCode = null;
+        this.render(); };
+	return this; // Not needed, as this is the default.
+}
+
+	
+</script>
+
+</head>
+
+<body>
+
+<fieldset id="ticketsView" >
+	<legend>Example 1</legend>
+	<select vm-value="chosenTicketCode">
+        <option vm-each="tickets" vm-value="code" vm-text="name"></option>
+	</select>
+	<button vm-on-click="onClickChooseTicket">Choose</button>
+	<button vm-on-click="onClickResetTicket">Clear</button><br />
+    <i style="font-size:8pt">You have <span vm-text="tickets.length+' tickets'">x</span> to choose from</i>
+
+	<div vm-with="getChosenTicketDetails()" >
+        <hr />
+        You have chosen <b vm-text="name">...</b>
+        ($<span vm-text="price">...</span>)
+    </div>
+</fieldset>
+<script language="JavaScript" type="text/JavaScript">
+    (new TicketsViewModel()).show(document.getElementById('ticketsView'));
+</script>
+</body>
+
+</html>

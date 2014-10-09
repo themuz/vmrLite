@@ -1,0 +1,53 @@
+
+/* vmr-tab-bar ======================== */
+
+ul.vmr-tab-bar {
+    display: block;
+    border-bottom: 1px solid #ddd;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+ul.vmr-tab-bar li {
+    display: inline-block;
+    margin-right: 2px;
+    color: #555;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    font-size: 0.8em;
+    line-height: 1.42857143;
+    padding: 4px 4px;
+    ZZborder-bottom-color: transparent;
+    border-radius: 4px 4px 0 0;
+}
+
+ul.vmr-tab-bar li.selected {
+    color: black;
+    background-color: #f7f7f9;
+    border: 1px solid #ddd;
+}
+
+
+ul.vmr-tab-bar a {
+    color: #aaa;
+    padding: 2px;
+    text-decoration: none;
+}
+
+
+ul.vmr-tab-bar li.selected a {
+    color: black;
+}
+
+ul.vmr-tab-bar a.x {
+    padding: 0;
+    padding-left: 4px;
+    color: #aaa;
+    text-decoration: none;
+    font-weight: bold;    
+}
+
+ul.vmr-tab-bar a.x:hover {
+  color: black;
+}

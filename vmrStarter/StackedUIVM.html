@@ -1,0 +1,14 @@
+<h5>vmrStackedForms:start</h5>
+<div class="vmr-window" vm-each="inners">
+    <div class="vmr-title-bar"  vm-on-mousedown="onMouseDownInTitle" vm-on-mousemove="onMouseMoveInTitle"
+         vm-on-mouseup="onMouseUpInTitle"  vm-on-mouseleave="onMouseUpInTitle" >
+        <span vm-text="title">vmrStackedForms-title</span>&nbsp;
+        <a class="vmr-title-bar-button x" vm-onclick="onClickClose">&times;</a>
+        <a class="vmr-title-bar-button" vm-onclick="onClickMinimize" vm-text="(this.minimized ? '&#709;' : '&#708;')"></a>
+        </span>
+    </div>
+    <div class="vmr-inner" vm-display="!minimized">
+        vmrStackedForms-vmr-inner
+    </div>
+</div>
+<h5>vmrStackedForms:end</h5>

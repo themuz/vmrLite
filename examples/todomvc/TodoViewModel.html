@@ -1,0 +1,36 @@
+<header id="header" vm-with="newTodo">
+    <h1>todos - vmrLite</h1>
+    <input id="new-todo" type="text" vm-value="name" vm-on-blur="onAddTodo" placeholder="What needs to be done?" autofocus>
+</header>
+<section id="main">
+    <input id="toggle-all" type="checkbox" vm-onclick="onToggleAll" title="Mark all as complete">
+    <ul id="todo-list" vm-each="todos" vm-display="showThisItem(index)">
+        <li vm-class-completed='completed' vm-class-editing='editingIdx==index'>
+            <div class="view" vm-on-dblclick="onCheckEditBegin">
+                <input class="toggle" type="checkbox" vm-value='completed' vm-onclick='onClickCompleted'>
+                <label vm-text='name'></label>
+                <button class="destroy" vm-onclick="onDeleteTodo"></button>
+            </div>
+            <input class="edit" type="text" vm-value="name" vm-focus="editingIdx==index" vm-on-blur="onBlurEdit">
+        </li>
+    </ul>
+</section>
+<footer id="footer" vm-display="todos.length" >
+    <span id="todo-count">
+        <span vm-text='remainingCount()'></span> items left
+    </span>
+    <ul id="filters">
+        <li>
+            <a href="#" vm-selected="list_filter_mode==''" vm-onclick='onClickFilter' set-filter=''>All</a>
+        </li>
+        <li>
+            <a href="#" vm-selected="list_filter_mode=='active'" vm-onclick='onClickFilter' set-filter='active'>Active</a>
+        </li>
+        <li>
+            <a href="#" vm-selected="list_filter_mode=='completed'" vm-onclick='onClickFilter' set-filter='completed'>Completed</a>
+        </li>
+    </ul>
+    <button id="clear-completed" vm-display="completedCount()" vm-onclick="onClickRemoveCompleted" >
+        Clear completed (<span vm-text="completedCount()"></span>)
+    </button>
+</footer>
