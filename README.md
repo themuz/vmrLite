@@ -10,6 +10,14 @@ Similar (sort of) to knockout. But much much simpler, and you control when to re
 
 Use with requireLite to dynamically load js and (partial) html.
 
+### Documented with jsdoc :-
+
+Its documented, See .md OR on-line here [jsdoc vmrLite!](http://themuz.github.io/jsdoc/module-vmrLite.html).
+
+### Samples :-
+
+And samples basic and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
+
 ### Features :-
 
 - lightweight (i.e. very small ~300 lines of code, excl comments/white-space)
