@@ -12,6 +12,14 @@ Similar (sort of) to knockout. But much much simpler, and you control when to re
 
 Use with requireLite to dynamically load js and (partial) html.
 
+### Documented with jsdoc :-
+
+Its documented, See .md OR on-line here [jsdoc vmrLite!](http://themuz.github.io/jsdoc/module-vmrLite.html).
+
+### Samples :-
+
+And samples basic and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
+
 ### Features :-
 
 - lightweight (i.e. very small ~300 lines of code, excl comments/white-space)
@@ -43,6 +51,15 @@ Below are the core/common items (vm- prefixed)
 - **on**-_type_ - Link a event of "type" to a function (e.g. vm-onclick === vm-on-click )
 - **more** - For full details, see the documentation (or read the code, its only ~100 lines!!)
 - **custom** - Add your own. Just create a function. e.g `vmrLite.tagFns['myslide'] = function (tag,elem,viewModel) { ... }`
+
+
+### Expressions 
+
+    Expressions withing the html are avaliated, with the following variables availab.e
+
+    - vm - The View Model
+    - this - The object within the vm-with/vm-each (or view-model if root)
+    - index - null or index within a vm-each.
 
 ### Usage Render (ViewModel => DOM)
 
@@ -132,13 +149,14 @@ var vmrLite = {};
 if (!String.prototype.compare) {
     String.prototype.compare = function (b) { return (this < b) ? -1 : (this === b) ? 0 : 1; };
 }
-vmrLite.log = function() {};
 
-vmrLite.Zlog = function() {
+vmrLite.log = function() {
     var args=Array.prototype.slice.call(arguments);
     args.unshift('[vmrLite]');
     console.log.apply(console,args);
 };
+
+vmrLite.log = function() {};
 
 
 /** 
@@ -399,7 +417,7 @@ vmrLite.buildEach = function (elem, withObj, viewModelObj, index) {
         nextElem, newElem, parentElement;
         
     eachExpr = elem.getAttribute('vm-each');
-    // vmrLite.log('vm-each ' + elem.get(0).tagName + '-' + eachExpr );
+    // vmrLite.log('vm-each ' + elem.tagName + '-' + eachExpr );
 
     eachArraylike = vmrLite.evalWith(eachExpr, withObj, viewModelObj, index);
     if (typeof eachArraylike === 'undefined') {
@@ -513,6 +531,12 @@ vmrLite.tagFns['text'] = function (tag, elem) {
     elem.textContent = tag.result; // (IE=innerText) IE9+ ok
 };
 
+vmrLite.tagFns['title'] = function (tag, elem) {
+    elem.setAttribute('title', tag.result);
+};
+
+
+
 /**
 Set the id property of the element (see tagFns for details)
 
@@ -563,6 +587,8 @@ vmr-value="expr" => elem.value=tag.result
 vmrLite.tagFns['value'] = function (tag, elem) {
     if (elem.type === 'checkbox') {
         elem.checked = !!tag.result;
+    } else if (elem.type === 'radio') {
+        elem.checked = ( tag.result == elem.value );
     } else {
         elem.value = tag.result;
     }
@@ -590,15 +616,30 @@ Set the elements style as defined by the tag parameter  (see tagFns for details)
 
 vmr-style-param="expr" => elem.style[tag.param] = tag.result;
 
+e.g vmr-style-width="this.boxWidth()"
+
 @method tagFns_style
 @protected
 @static
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
+
+NOTE ISSUE with chrome, it converts vm-attribute names to lowercase !!!
 */
 
 vmrLite.tagFns['style'] = function (tag, elem) {
+    if ( tag.param=='background-color')
+        tag.param='backgroundColor';
     elem.style[tag.param] = tag.result;
+};
+
+
+vmrLite.tagFns['attr'] = function (tag, elem) {
+    elem.setAttribute(tag.param,tag.result);
+};
+
+vmrLite.tagFns['data'] = function (tag, elem) {
+    elem.setAttribute('data-'+tag.param,tag.result);
 };
 
 /**
@@ -920,6 +961,11 @@ vmrLite.renderChildren = function (elem, withObj, viewModelObj, index) {
     }
 };
 
+vmrLite.stripZeroTime = function (str) {
+  if ( !str ) return str;
+  return str.replace(/T00\:00\:00.000Z|\:00\.000Z|\.000Z/,'');
+};
+
 /*
 
 Render this Element. (Internal Use)
@@ -943,7 +989,13 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
         i, tagFn, tag, attrValue;
     if (elem.jquery) { elem = elem.get(0); } // Want plain elem (not jQuery)
 
-    parseChildren = !elem.getAttribute('vm-container'); // Don't go deeper if, this is another objects container !!
+    var vmID = elem.getAttribute('vm-container'); 
+    // Don't go deeper if, this is another objects container !! but DO if me.
+    // MS: 2015-03-11 bug fix. If optimize and render same object
+    // on a inner element (for speed),make sure when render the body dont skip if me.
+    // FOr this to work OK. the view model mus have a ".id" or "._id" property.
+
+    parseChildren = ( !vmID || ( vmID == viewModelObj.id ) || ( vmID == viewModelObj._id ));
 
     if (!withObj) {
         elem.style.display = 'none';
@@ -964,12 +1016,13 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
     // Parse 'vm-each', each adds/deletes vm-with sibling nodes, (incl itself)
     // Messy bit is, vm-each injects vm-with at the same level in the dom, i.e. siblings
 
-    if (elem.getAttribute('vm-each') && (index !== 0)) { // Don't render the each, if we specified an index
-        index = elem.getAttribute('index');
-        if (index && index !== '0') {
-            console.error('Internal validation with each');
-            return;
-        }
+    // if (elem.getAttribute('vm-each') && (index !== 0)) { // Don't render the each, if we specified an index
+    if (elem.getAttribute('vm-each')) { // Don't render the each, if we specified an index
+        // index = elem.getAttribute('index');
+        // if (index && index !== '0') {
+        //    console.error('Internal validation with each');
+        //    return;
+        // }
         if (!vmrLite.buildEach(elem, withObj, viewModelObj, index)) {
             return; // No-elements nothing to do.
         }
@@ -1015,6 +1068,7 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
                 tag.result = vmrLite.evalWith(tag.value, withObj, viewModelObj, index);
                 if (typeof tag.result === 'undefined') { tag.result = '(?)'; }
                 if (typeof tag.result === 'function') { tag.result = tag.result.bind(viewModelObj); }
+                if (tag.result && tag.result.toISOString) { tag.result = vmrLite.stripZeroTime(tag.result.toISOString()); }
 
                 tagFn = vmrLite.tagFns[tag.name];
                 if (!tagFn) {
@@ -1136,11 +1190,15 @@ vmrLite.syncElement = function (elem, withObj, viewModelObj, index) {
         attr = aAttrs.item(i);
         if (attr) {
             if (attr.name === 'vm-value') {
-                val = elem.value;
-                if (elem.type === 'checkbox') {  val = elem.checked; }
+                val = elem.value; // By default, use its value. 
+                if ( elem.type === 'checkbox' ) {  
+                    if ( !elem.checked ) val = null; // Not checked, value is null.
+                } else if ( elem.type === 'radio' ) {  
+                    if ( !elem.checked ) val = undefined; // Not checked, value is undefined
+                }
                 expr = elem.getAttribute('vm-value');
-                // vmrLite.log('ASSIGN ' + expr + ' <= ' + val);
-                vmrLite.assignWith(val, expr, withObj, viewModelObj);
+                if ( typeof(val) != 'undefined' )
+                    vmrLite.assignWith(val, expr, withObj, viewModelObj);
 
             }
         }
