@@ -141,8 +141,8 @@ index.html
 */
 
 
-// Bind $id in-case we have properties called window/document.
-var $id = function (id) { return this.getElementById(id); }.bind(window.document);
+// get Element by ID, (use bind incase properties called window/document).
+var $eid = function (id) { return this.getElementById(id); }.bind(window.document);
 
 var vmrLite = {};
 
@@ -230,7 +230,8 @@ vmrLite.triggerEvent = function (elem, etype, detail) {
 
 
     return elem.dispatchEvent(ev);
-    // return elem.dispatchEvent(new CustomEvent(type, { bubbles: true, cancelable: true, detail: detail } ));
+    // Without IE9/10 support.
+    // return elem.dispatchEvent(new CustomEvent(etype, { bubbles: true, cancelable: true, detail: detail } ));
 };
 
 /**
@@ -535,6 +536,12 @@ vmrLite.tagFns['title'] = function (tag, elem) {
     elem.setAttribute('title', tag.result);
 };
 
+// Non Breaking text
+vmrLite.tagFns['nbtext'] = function (tag, elem) {
+    elem.textContent = String(tag.result).
+        replace(/\-/g,'\u2011').
+        replace(/\ /g,'\u00A0');
+};
 
 
 /**
@@ -733,6 +740,7 @@ vmrLite.SUPPORTED_EVENTS_HASH = { 'onclick': true, 'onkeyup': true, 'onblur': tr
 
 /*
 Event handler, used by on-blur, If CR is pressed, call event targerts onblur function
+which will inturn call onchange.
 
 @method tagFns_onEnterCallBlur
 @protected
@@ -992,7 +1000,7 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
     var vmID = elem.getAttribute('vm-container'); 
     // Don't go deeper if, this is another objects container !! but DO if me.
     // MS: 2015-03-11 bug fix. If optimize and render same object
-    // on a inner element (for speed),make sure when render the body dont skip if me.
+    // on a inner element (for speed) it will get a vm-container as well.
     // FOr this to work OK. the view model mus have a ".id" or "._id" property.
 
     parseChildren = ( !vmID || ( vmID == viewModelObj.id ) || ( vmID == viewModelObj._id ));
@@ -1097,11 +1105,27 @@ i.e View Model ===> DOM
 */
 
 vmrLite.render = function (containerElement, viewModelObj) {
-    var tag, after;
+    var tag, after, vmID;
     vmrLite.afterRenderApply = []; // Array of { fn: function , args: argsArray } to call after render complete
 
     if (containerElement.jquery) { containerElement = containerElement.get(0); } // Want plain elem (not jQuery)
     // We dont process the containerElement, only the children
+    vmID = containerElement.getAttribute('vm-container'); 
+    // Add update vm-container id, for viewModels inside viewModels
+    if ( !vmID || (( vmID != viewModelObj.id ) && ( vmID != viewModelObj._id ))) {
+        // Update id. As developer may/should of added a vm-container attribute,
+        // To the div, if have a viewModel inside a viewModel 
+        // So outer view model does not in 1st render, enter another models html 
+        vmID = viewModelObj.id;
+        if (!vmID) { 
+            vmID = viewModelObj._id; 
+            if (!vmID) { 
+                vmID = vmrLite.SEQ++; 
+                viewModelObj._id = vmID;
+            }
+        }
+        containerElement.setAttribute('vm-container', vmID);        
+    }
     if (!containerElement.getAttribute('vm-container')) { // No root tag, add one
         tag = viewModelObj.id;
         if (!tag) { tag = viewModelObj._id; }
@@ -1194,6 +1218,7 @@ vmrLite.syncElement = function (elem, withObj, viewModelObj, index) {
                 if ( elem.type === 'checkbox' ) {  
                     if ( !elem.checked ) val = null; // Not checked, value is null.
                 } else if ( elem.type === 'radio' ) {  
+                    // todo: bug fix, if NO items are checked val should be nil. (not left unassigned)
                     if ( !elem.checked ) val = undefined; // Not checked, value is undefined
                 }
                 expr = elem.getAttribute('vm-value');
@@ -1293,7 +1318,7 @@ BE TIDY. Call to clear a node.
 
 vmrLite.empty = function (containerElement) {
     if (containerElement.jquery) { containerElement = containerElement.get(0); } // Want plain elem (not jQuery)
-    console.log('EMPTY ' + containerElement.id + ' ' + containerElement.href, containerElement);
+    // console.log('EMPTY ' + containerElement.id + ' ' + containerElement.href, containerElement);
 
     vmrLite.clearOnEventsElement(containerElement); // MS: BUG fix, was clearOnEventsChildren, BUT Need to clear the onEvent at this node.
     while (containerElement.firstChild) {
