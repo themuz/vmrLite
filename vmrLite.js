@@ -1,4 +1,6 @@
+/* jshint globalstrict: true */
 "use strict";
+
 /* global window, console, document, module */
 
 /**
@@ -150,14 +152,6 @@ if (!String.prototype.compare) {
     String.prototype.compare = function (b) { return (this < b) ? -1 : (this === b) ? 0 : 1; };
 }
 
-vmrLite.log = function() {
-    var args=Array.prototype.slice.call(arguments);
-    args.unshift('[vmrLite]');
-    console.log.apply(console,args);
-};
-
-vmrLite.log = function() {};
-
 
 /** 
 
@@ -171,6 +165,19 @@ Class name for the object
 */
 
 vmrLite.className = 'vmrLite';
+
+
+/** 
+
+Version of the library
+
+@name version
+@type String
+@static
+@readonly 
+*/
+
+vmrLite.version = '1.1';
 
 /**
 
@@ -293,7 +300,7 @@ vmrLite.evalWith = function (expr, withObj, viewModelObj, index) {
     try {
         return fn.call(withObj, viewModelObj, index);
     } catch (ex) {
-        // console.error(' vmrLite.evalWith( "' + expr + '") ' + ex.message );
+        console.error(' vmrLite.evalWith( "' + expr + '") ' + ex.message );
         // HACK create object
         withObj[expr] = null;
         return null; // '(exception)'
@@ -319,7 +326,7 @@ vmrLite.assignWith = function (value, expr, withObj, viewModelObj, index) {
     try {
         return fn.call(withObj, value, viewModelObj, index);
     } catch (ex) {
-        vmrLite.log('Exception with "' + expr + '"');
+        console.log('Exception with "' + expr + '"');
         throw ex;
 
     }
@@ -372,7 +379,7 @@ vmrLite.deleteEachElem = function (delElem) {
     if (delElem.jquery) { delElem = delElem.get(0); } // Want plain elem (not jQuery)
 
     index = delElem.getAttribute('index');
-    vmrLite.log('vmrLite.deleteEachElem ', index);
+    console.log('vmrLite.deleteEachElem ', index);
     if (typeof index !== 'string') {
         console.error('vmrLite.deleteEachElem element has NO index', delElem);
         index = '8888';
@@ -418,7 +425,7 @@ vmrLite.buildEach = function (elem, withObj, viewModelObj, index) {
         nextElem, newElem, parentElement;
         
     eachExpr = elem.getAttribute('vm-each');
-    // vmrLite.log('vm-each ' + elem.tagName + '-' + eachExpr );
+    // console.log('vm-each ' + elem.tagName + '-' + eachExpr );
 
     eachArraylike = vmrLite.evalWith(eachExpr, withObj, viewModelObj, index);
     if (typeof eachArraylike === 'undefined') {
@@ -431,7 +438,7 @@ vmrLite.buildEach = function (elem, withObj, viewModelObj, index) {
     if (eachArraylike) {
         len = eachArraylike.length; // Assume "array" like.
     }
-    // vmrLite.log('vm-each ' + elem.get(0).tagName + '-' + eachExpr + ' len='+len);
+    // console.log('vm-each ' + elem.get(0).tagName + '-' + eachExpr + ' len='+len);
     // The each is always hidden.
     elem.style.display = 'none';
 
@@ -460,7 +467,7 @@ vmrLite.buildEach = function (elem, withObj, viewModelObj, index) {
 
     // See if need to delete any extra items.
     while (nextElem && (nextElem.getAttribute('index') === String(i))) {
-        // vmrLite.log('DELETE');
+        // console.log('DELETE');
         newElem = nextElem; // newElem == element to delete.
         nextElem = nextElem.nextElementSibling;
         // Remove node last
@@ -495,7 +502,7 @@ A tag is expressed as vmr-tagname-param="value-expr" in the html
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['base'] = function (tag, elem) {}; // noop operator.
+vmrLite.tagFns.base = function (tag, elem) {}; // noop operator.
 
 /**
 Set the innerHTML property of the element (see tagFns for details).
@@ -528,16 +535,16 @@ vmr-text="expr" => elem.textContent = tag.result
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
-vmrLite.tagFns['text'] = function (tag, elem) {
+vmrLite.tagFns.text = function (tag, elem) {
     elem.textContent = tag.result; // (IE=innerText) IE9+ ok
 };
 
-vmrLite.tagFns['title'] = function (tag, elem) {
+vmrLite.tagFns.title = function (tag, elem) {
     elem.setAttribute('title', tag.result);
 };
 
 // Non Breaking text
-vmrLite.tagFns['nbtext'] = function (tag, elem) {
+vmrLite.tagFns.nbtext = function (tag, elem) {
     elem.textContent = String(tag.result).
         replace(/\-/g,'\u2011').
         replace(/\ /g,'\u00A0');
@@ -556,7 +563,7 @@ vmr-id="expr" => elem.id=tag.result
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['id'] = function (tag, elem) {
+vmrLite.tagFns.id = function (tag, elem) {
     elem.id = tag.result;
 };
 
@@ -574,7 +581,7 @@ vmr-display="expr" => elem.style.display = ( tag.result ? '' : 'none' );
 */
 
 
-vmrLite.tagFns['display'] = function (tag, elem) {
+vmrLite.tagFns.display = function (tag, elem) {
     elem.style.display = (tag.result ? '' : 'none');
 };
 
@@ -591,7 +598,7 @@ vmr-value="expr" => elem.value=tag.result
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
-vmrLite.tagFns['value'] = function (tag, elem) {
+vmrLite.tagFns.value = function (tag, elem) {
     if (elem.type === 'checkbox') {
         elem.checked = !!tag.result;
     } else if (elem.type === 'radio') {
@@ -613,7 +620,7 @@ vmr-class-param="expr" => elem.classList.toggle(tag.param,!!tag.result)
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['class'] = function (tag, elem) {
+vmrLite.tagFns.class = function (tag, elem) {
     vmrLite.setClass(elem, tag.param, !!tag.result);
     //vmrLite.classList_toggle(elem,tag.param,!!tag.result);
 };
@@ -634,18 +641,18 @@ e.g vmr-style-width="this.boxWidth()"
 NOTE ISSUE with chrome, it converts vm-attribute names to lowercase !!!
 */
 
-vmrLite.tagFns['style'] = function (tag, elem) {
+vmrLite.tagFns.style = function (tag, elem) {
     if ( tag.param=='background-color')
         tag.param='backgroundColor';
     elem.style[tag.param] = tag.result;
 };
 
 
-vmrLite.tagFns['attr'] = function (tag, elem) {
+vmrLite.tagFns.attr = function (tag, elem) {
     elem.setAttribute(tag.param,tag.result);
 };
 
-vmrLite.tagFns['data'] = function (tag, elem) {
+vmrLite.tagFns.data = function (tag, elem) {
     elem.setAttribute('data-'+tag.param,tag.result);
 };
 
@@ -659,8 +666,8 @@ Dump a debug message the "tag.result" to the console,
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
-vmrLite.tagFns['debug'] = function (tag, elem) {
-    vmrLite.log('debug:' + tag.result);
+vmrLite.tagFns.debug = function (tag, elem) {
+    console.log('debug:' + tag.result);
     elem.setAttribute('debug', tag.result);
 };
 /**
@@ -675,7 +682,7 @@ vmr-readOnly="expr" => elem.readonly = !!tag.result; vmrLite.classList.toggle(el
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['readonly'] = function (tag, elem) {
+vmrLite.tagFns.readonly = function (tag, elem) {
     // Short for vm-class-required + input.disabled
     vmrLite.setClass(elem, 'readonly', !!tag.result);
     // vmrLite.classList_toggle(elem,'readOnly',!!tag.result);
@@ -694,7 +701,7 @@ vmr-readOnly="expr" => elem.disabled = !!tag.result; vmrLite.classList.toggle(el
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['disabled'] = function (tag, elem) {
+vmrLite.tagFns.disabled = function (tag, elem) {
     // Short for vm-class-required + input.disabled
     vmrLite.setClass(elem, 'disabled', !!tag.result);
     elem.disabled = !!tag.result;
@@ -713,7 +720,7 @@ vmr-required="expr" => elem.required = !!tag.result; vmrLite.classList.toggle(el
 */
 
 
-vmrLite.tagFns['required'] = function (tag, elem) {
+vmrLite.tagFns.required = function (tag, elem) {
     // Short for vm-class-required + input.required
     vmrLite.setClass(elem, 'required', !!tag.result);
     elem.required = !!tag.result;
@@ -731,7 +738,7 @@ vmr-required="expr" => elem.selected = !!tag.result; vmrLite.classList.toggle(el
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['selected'] = function (tag, elem) {
+vmrLite.tagFns.selected = function (tag, elem) {
     elem.selected = !!tag.result;
     vmrLite.setClass(elem, 'selected', !!tag.result);
 };
@@ -772,7 +779,7 @@ vmr-in-param="expr" => elem['on'+param] = tag.result.bind(viewModelObj);
 */
 
 
-vmrLite.tagFns['on'] = function (tag, elem, viewModelObj) {
+vmrLite.tagFns.on = function (tag, elem) {
     if (typeof tag.result  !== 'function') {
         console.error('vmrLite.tagFns not a function, for  on-' + tag.param + '=' + tag.value);
         return;
@@ -784,7 +791,7 @@ vmrLite.tagFns['on'] = function (tag, elem, viewModelObj) {
     var on = 'on' + tag.param;
     vmrLite.SUPPORTED_EVENTS_HASH[on] = true; // Keep track of event types used.
     // console.log(on+' set');
-    elem[on] = tag.result.bind(viewModelObj);
+    elem[on] = tag.result;
 };
 
 /**
@@ -798,10 +805,10 @@ Attach a onClick event to the Element. Short/Alias for vm-on-click. See tagFns.o
 @param viewModelObj {Object}  Outer object, used to bind the function to.
 */
 
-vmrLite.tagFns['onclick'] = function (tag, elem,  viewModelObj) {
+vmrLite.tagFns.onclick = function (tag, elem) {
     // short cut for vm-on-click
     tag.param = 'click';
-    vmrLite.tagFns['on'](tag, elem, viewModelObj);
+    vmrLite.tagFns.on(tag, elem);
 };
 
 /**
@@ -816,7 +823,7 @@ vmr-focus="expr" => if ( result ) window.setTimeout( function() { elem.focus() }
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['focus'] = function (tag, elem) {
+vmrLite.tagFns.focus = function (tag, elem) {
     // Set focus to this control.
     if (tag.result) {
         // Implied it should be visible. to set focus
@@ -831,7 +838,7 @@ vmrLite.tagFns['focus'] = function (tag, elem) {
 };
 
 
-vmrLite.tagFns['container'] = function () {}; // noop operator.
+vmrLite.tagFns.container = function () {}; // noop operator.
 
 /**
 Sync a table elements, td/th column widths with its parent, previous-sibling table.
@@ -850,7 +857,7 @@ Elem.parent.previousElementSibling is assumed to be the header table to sync.
 @param elem {Element} HTML element containing attribute tag
 */
 
-vmrLite.tagFns['synctdth'] = function (tag, elem) {
+vmrLite.tagFns.synctdth = function (tag, elem) {
     // NOTE: !!! We need to sync widths LAST, after table has been rendered.
     vmrLite.afterRenderApply.push({ fn: vmrLite.tagFns['synctdth-after'], args: [tag, elem]});
 };
@@ -900,17 +907,17 @@ vmrLite.tagFns['synctdth-after'] = function (tag, bodyTable) {
 */
     headerTable = bodyTable.parentElement.previousElementSibling;
     if (!headerTable) {
-        vmrLite.log('vmrLite.tagFns[synctdth] cant find header table for ' + bodyTable);
+        console.log('vmrLite.tagFns[synctdth] cant find header table for ' + bodyTable);
         return;
     }
-    //vmrLite.log('header=', headerTable)
-    //vmrLite.log('body=', bodyTable)
+    //console.log('header=', headerTable)
+    //console.log('body=', bodyTable)
     bodyTd = bodyTable.firstElementChild.firstElementChild; // get the <tr>
     while (bodyTd && bodyTd.style.display === 'none') {
         bodyTd = bodyTd.nextElementSibling;
     }
     if (!bodyTd) {
-        vmrLite.log('vmrLite.tagFns[synctdth] cant find tr table for ' + bodyTable);
+        console.log('vmrLite.tagFns[synctdth] cant find tr table for ' + bodyTable);
         return;
     }
 
@@ -918,13 +925,13 @@ vmrLite.tagFns['synctdth-after'] = function (tag, bodyTable) {
 
     headerTd = headerTable.firstElementChild.firstElementChild;  // get the <tr>
     if (!headerTd) {
-        vmrLite.log('vmrLite.tagFns[synctdth] cant find tr header table for ' + headerTable);
+        console.log('vmrLite.tagFns[synctdth] cant find tr header table for ' + headerTable);
         return;
     }
     headerTd = headerTd.firstElementChild; // get td/th
 
-    //vmrLite.log('headerTd=', headerTd)
-    //vmrLite.log('bodyTd=', bodyTd)
+    //console.log('headerTd=', headerTd)
+    //console.log('bodyTd=', bodyTd)
 
     while (headerTd && bodyTd) {
         // offsetWidth does not seem to work in Chrome!!
@@ -1012,7 +1019,7 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
 
 
     // Want a DOM element not jQuery, for speed
-    // vmrLite.log('render '+ elem.tagName );
+    // console.log('render '+ elem.tagName );
 
 
     parseChildIst = (elem.tagName.toLowerCase() === 'select'); // Its a select, We need the options 1st.
@@ -1041,7 +1048,7 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
     attrValue = elem.getAttribute('vm-with');
     if (attrValue) {
         withObj = vmrLite.evalWith(attrValue, withObj, viewModelObj, index); // index is the parent index??
-        // vmrLite.log('vm-with ' + attrValue + ' result= ' + JSON.stringify(withObj) );
+        // console.log('vm-with ' + attrValue + ' result= ' + JSON.stringify(withObj) );
         if (!withObj) {
             elem.style.display = 'none';
             return; // Object is null, return and DONT renderChildren
@@ -1075,7 +1082,8 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
                 tag.value = aAttrs.item(i).value;
                 tag.result = vmrLite.evalWith(tag.value, withObj, viewModelObj, index);
                 if (typeof tag.result === 'undefined') { tag.result = '(?)'; }
-                if (typeof tag.result === 'function') { tag.result = tag.result.bind(viewModelObj); }
+                // 2016-01-03 bug fix, as double wrapping and should be bound to withObj (not viewModelObj)
+                if (typeof tag.result === 'function') { tag.result = tag.result.bind(withObj); }
                 if (tag.result && tag.result.toISOString) { tag.result = vmrLite.stripZeroTime(tag.result.toISOString()); }
 
                 tagFn = vmrLite.tagFns[tag.name];
@@ -1083,7 +1091,7 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
                     console.error('You have a typo with vm-' + tag.name + ' in ' + elem.tagName);
                     return;
                 }
-                tagFn(tag, elem, viewModelObj);
+                tagFn(tag, elem);
             }
         }
     }
@@ -1107,6 +1115,7 @@ i.e View Model ===> DOM
 vmrLite.render = function (containerElement, viewModelObj) {
     var tag, after, vmID;
     vmrLite.afterRenderApply = []; // Array of { fn: function , args: argsArray } to call after render complete
+    // console.log('render ' + containerElement.id );
 
     if (containerElement.jquery) { containerElement = containerElement.get(0); } // Want plain elem (not jQuery)
     // We dont process the containerElement, only the children
@@ -1192,7 +1201,7 @@ vmrLite.syncElement = function (elem, withObj, viewModelObj, index) {
     // Process with
     attrValue = elem.getAttribute('vm-with');
     if (attrValue) {
-        // vmrLite.log('vm-with ' + index);
+        // console.log('vm-with ' + index);
         withObj = vmrLite.evalWith(attrValue, withObj, viewModelObj, index); // index is the parent index??
         if (!withObj) { return; } // Object is null
 
@@ -1352,7 +1361,6 @@ vmrLite.showModal = function (innerViewModel) {
 
 
 
-// Export vmrLite, if used via require
-if (typeof module !== 'undefined') {
+if (typeof(module) !== 'undefined') {
     module.exports = vmrLite;
 }
