@@ -2,18 +2,26 @@
 
 /**
 
-## Client (Browser) Module Require Lite Loader (Version 0.3)
+### Client (Browser) Implementation of require/CommonJS loader 
 
-
-Browser/client emulation of nodejs's syncronous module loader (require) library.
+Browser/client emulation of CommonJS/node-js's syncronous module loader (require) library.
 
 With a Lite KISS (Keep It Simple Stupid) approach
 
-See nodejs's module loader for background information. (http://nodejs.org/api/modules.html#reqModules_the_reqModule_object)
+See nodejs's module loader for background information. (https://nodejs.org/docs/latest/api/modules.html#modules_the_module_object)
 
-### Supports js,css,html and json loadng.
+#### Supports js,css,html and json loadng.
 
-### Features :-
+#### Documented with jsdoc :-
+
+Its documented, See .md OR on-line here [jsdoc requireLite!](http://themuz.github.io/jsdoc/module-requireLite.html).
+
+#### Samples :-
+
+And samples basic and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
+
+
+#### Features :-
 - *cache* - Modules are cached after the first time they are loaded
 - *sync* - synchronous (i.e wait) by default like nodejs, Make code/dependancies simple/managable.
 - *async* - Async with callback, if you must. 
@@ -23,54 +31,60 @@ See nodejs's module loader for background information. (http://nodejs.org/api/mo
 - *encapsulated* - js is encapsulated in the module pattern, no namespace/global pollution. i.e. Variables local to the module will be private
 - *no dependancies* 
 
-### Other file types :=
+#### Other file types :=
 
 - *json support* - If the url extension is '.json' json will be loaded, and parsed (JSON.parse) and object returned.
 - *css support* - If the url extension is '.css', css will be automatically loaded as a window.document.head.link and link's DOM-Element returned. 
-- *html support* - If the url extension is '.html' json will be loaded into a div and div's html-Element returned. 
+- *html support* - If the url extension is '.html' the html will be loaded into a div and div's html-Element returned. 
 
-### Usage
+#### Usage
 
-    var loadedObject =requireLite(url,[callback]);
+    var loadedObject = require(url,[callback]);
 
 loadedObject is whatever is returned by the js, by assigning to module.exports (see below)
 
-### JS Modules (.js)
+#### JS Modules (.js)
 
 In each js module the "module" free variable is a reference to the object representing the current module.
 
-The module variable has the following attributes :-
+The *module* variable has the following attributes :-
 
-- exports - The object/function being/to-be exported. Assign to module.exports to return your loadedObject. (initalized to {})
-- callbacks - Array of pending callback function (to call when js loaded, used in async mode)
-- __id - A incrementing id assigned to the module
-- __filename - The url as passed to requireLite (e.g. /js/module/Circle.js)
-- __dirname - The folder path for the url, without a trailling "/" ( e.g. /js/module OR . ) 
+- exports - Object - The object/function being/to-be exported. Assign to module.exports to return your loadedObject. (initalized to {})
+- id - String - The identifier assigned to the module
+- filename - String - The pathname/url to the module. (e.g. /js/modules/Circle.js)
+- loaded - Boolean - Whether or not the module is done loading, or is in the process of loading
 
-
- 
-In addition the "exports" free variable is also available. This is initalized to {}. 
-If you use the "exports" variable, only defined new properties/methods. Dont assign to it, as will be lost. If you wish to return
+In addition the "exports" free variable is also available, corresponds to module.exports and initialized to {}. 
+If you use the "exports" variable, only defined new properties/methods. 
+Don't assign to it, as will be lost. If you wish to return
 just an object assign to "module.exports" instead.
 
-Dirname is usefull if you wish to grab other js/html associated with the file loading. 
- e.g div=requireLite('./myspecial-div.html')
+#### Deferred loading.
+
+If you wich to defer loading dependent modules to run-time (vs load-time) ensure you save/use the 
+requireLite.cwd (Current working directory) property, since the cwd may differ at run-time. 
+Use this variable when loading modules at run-time.
+
+e.g
+
+    function MyModule() { etc ... }    
+
+    MyModule.cwd = require.cwd || ''; // This allows js compatability with node-js or browser 
+
+    MyModule.doitlater = function() {
+        defered_module_loaded=require(MyModule.cwd + './deferred_module.js')
+    }
 
 
-### Isnt sync slow, with lots of http requests.
+#### Isnt sync slow, with lots of http requests.
 
-NO, Not if  all modules pre are loaded (as we should do in production mode for performance)
+NO, Not if  all modules are pre-loaded (as we should do in production mode for performance)
 The require is immediate, why code for complex dependancies/async code when not needed.
 
 In fact if we can pre load the modules FASTER, i.e. in parallel (subject to dependancies)
 
 This pre-loading is my next project, See below the TODO list.
 
-TODO:-
-
-- Ability to place the app in dev mode, build up the modules/depencancies by running the application. 
-- Export module and dependanceis as a config/loader object.
-- Load modules using dependancie config, in parallel (with dependancies)
 
 #### Example Module (circle.js)
 
@@ -92,24 +106,32 @@ TODO:-
 
 #### Example Usage  (async)
 
-    var  Circle=requireLite('./lib/circle.js');
+    var  Circle=require('./lib/circle.js');
     alert('The are of a 1" circle is ' + Circle.area(1) + '"')
 
 #### Example Usage  (async)
 
-    requireLite('./lib/circle.js', function(circle) {
+    require('./lib/circle.js', function(circle) {
       // Do stuff with the "circle", now its loaded   
     });
 
+#### Change log
+
+    2016-02-04 rename module.__filename -> filename, __id -> id for consistency with CommonJS/node-js
+    2016-02-04 removed module.__dirname as in-consistent with CommonJS (use require.cwd as a replacement)
+
 
 #### TODO:-
+- Ability to place the app in dev mode, build up the modules/depencancies by running the application. 
+- Tool to wrap all modules, with dependancies into a single unit for production use.
 - Handle cyclic references e.g. A requires B that requires A
 - if Async scan the js code for require('module.js' .. and load that async 1st.
-- DONE: Add requireLite.ROOT to define root folder. default being ""
-- Add name-space urls. e.g. mylib:module.js ==> ROOT + '/js/applib/module.js'
 
 @module requireLite
+
 */
+
+/* global window, console, document, XMLHttpRequest, module */
 
 
 /**
@@ -117,139 +139,155 @@ TODO:-
 @function requireLite
 @static
 @public
-@param url {String} url to load.
-@param extn {String} OPTIONAL override extension to use, use when loading .js file, so can load the corresponding .html/.js
+@param url {String} url to load. Paths should be relative to current module.
 @param callback {Function} OPTIONAL Callback function, to enable async call, parameter passed is value of module.exports 
 @return {null|Object} null if async, value of module.exports if sync.
 
 */
 
-/* global window, console, document, XMLHttpRequest, module */
-
 function requireLite(url, callback) {
     var splitPath;
-    /*
-    // CHANGED: Remove extn param, as not compatable with nodejs's require.
-    if (extn && (typeof extn !== 'string' )) {
-        // extn is not a string, must be the callback
-        extn = null;
-        callback = extn;
-    }
-    if (url.search(/\.json|\.js|\.htm|\.css/) < 0) {
-        // No extension, add in the default. 
-        if (!extn) extn = 'js';
-        url += ('.' + extn);
+
+    if ( url.search(/^https?:/) === 0 ) {
+        // Explicit path. To another domain.
+        // Do nothing
     } else {
-        // Have an extension.
-        if (extn) // Replace the extension
-            url = url.replace(/(?=.)[jhc][st][oms]?[nl]?/,extn);
-    }
-    */
-    if (url.search(/\.json|\.js|\.htm|\.css/) < 0) {
-        // No extension, add in the default. 
-        url += '.js';
+        if (url.search(/\.json|\.js|\.htm|\.css/) < 0) {
+            // No extension, add in the default. 
+            url += '.js';
+        }
+
+        if ( url.match(/^\//) ) {
+          // Root path :-
+          // Do nothing.
+        } else {
+		  // Relative path, add in current working directory.
+          url = requireLite.cwd + url;
+        }
+        // 2015-12-11 If CWD is stored by client it will have an explicit path !!
+        // Always Clean up urls as we compare modules by urls
+        // Remove "/./"
+        url = url.replace(/\/\.\//g,'\/'); // 
+        // map "/folder-name/../" => "/"
+        url = url.replace(/\/[^\/]+\/\.\.\//g,'\/');
+        // map "/folder-name/../" => "/"
+        url = url.replace(/\/[^\/]+\/\.\.\//g,'\/');          
     }
 
-    // requireLite.CWD filepath with a training "/"
-    if ( url.match(/^\//) ) { // Relative url.
-      // Root patch, Do nothing.
-    } else {
-      url = requireLite.CWD + '/' + url;
-      url = url.replace(/\/\.\//g,'\/'); // aaaa/bbbb/./cccc.js ==> aaaa/bbbb/cccc.js
-      url = url.replace(/\/[^\/]+\/\.\.\//g,'\/'); // aaaa/bbbb/../cccc.js ==> aaaa/cccc.js
-    }
-
-
-    var module = requireLite.CACHE[url];
-    if (module) {
+    // In Chrome name is CACHE items are null. No it was an issue with no-cache !!
+    var module = requireLite.cachedModules[url];
+    if (module && !module.noCache) {
         // Cached !!
         if (module.loaded) {
             if (callback) {
-                console.log('requireLite: cached callback ' + url);
+                // console.log('debug:requireLite: cached immediate callback ' + url);
                 callback(module.exports);
                 return null;  // Dont return anything, as a async call.
             }
-            console.log('requireLite: cached return ' + url);
+            // console.log('debug:requireLite: cached ' + url);
             return module.exports;
         }
         if (callback) {
-            console.log('requireLite: cached but still loading. push ' + url);
-            // module loading in progress.
+            // console.log('debug:requireLite: still loading. push ' + url);
+            // sync-call, but module loading in progress.
             // Push callback into  the stack.
             module.callbacks.push(callback);
             return null;   // Dont return anything, as a async call. (Have to re-load another module !!)
         } else {
+        	// No Callback. async-call (wait) 
+        	// BUT we are waiting for a sync-call to load the same module
             if ( module.callbacks.length > 0 ) {
-                console.warn('requireLite: sync call, while loading async. (need to load 2nd instance) ' + url);
+            	// sync-call -> ... -> async-call (same module) 
+            	// Should not happen. best we can do is reload async
+                console.log('WARNING: requireLite: sync call, while loading async. (need to load 2nd instance) ' + url);
                 url = url + '?sync=1';
                 module = null;
+	            // Drop thru - load module 2nd time !!
             } else {
-                console.error('requireLite: RECCURSIVE CALL !!! ' + url);
+            	// async-call -> ... -> async-call !!! Panic recursive !!
+                console.log('PANIC: requireLite RECCURSIVE CALL !!! ' + url);
                 return null;
             }
-            // Drop thru
         }
     }
 
     // Not cached
     module = {
-        __id: requireLite.SEQ++,
-        __filename: url,
+        id: requireLite.SEQ++,
+        filename: url,
+        cwd: '.',
         loaded: false,
         callbacks: [],
         exports: {}
     };
-    splitPath = module.__filename.split('/');
-    splitPath.pop();
-    module.__dirname = splitPath.join('/');
-    if ( module.__dirname.length === 0 ) module.__dirname = '.'; 
-    // module.__dirname += '/'; // Dont add a "/", be the same as nodejs's require
-    
+
+
+
     if (callback) {
         module.callbacks.push(callback);
     }
-    requireLite.CACHE[url] = module;
-    console.log('requireLite: loading ' + module.__filename);
+    requireLite.cachedModules[url] = module;
+    // console.log('debug:requireLite: loading ' + module.filename);
     requireLite.loadScript(module);
     if (callback) {
-        console.log('requireLite: return null ' + module.__filename);
+        // console.log('debug:requireLite: return  null ' + module.filename);
         return null;
     }
-    console.log('requireLite: return ' + module.__filename);
+    // console.log('debug:requireLite: return ' + module.filename);
     return module.exports; // NOTE: if callback is defined, module.exports will be {} since async.
 
 }
 
 
-requireLite.CACHE = {};
+/**
 
+
+Version of the library
+
+@field
+@memberof module:requireLite
+@type String
+@default "0.3"
+
+*/
+
+requireLite.version = '0.3';
 
 /**
 
-The "root" for calls with a absolute path (i.e. url starts with "/" )
-if url starts with "/", ROOT is prepended to the url. 
+Current Working Directory WITH a trailing "/"
 
-@name ROOT
-@static
-@public
-@type String
-@public
-@static
-@default ''
+@field 
+@memberof module:requireLite
+@type string
+@default './'
+
+*/
+
+requireLite.cwd = './';
+
+/**
+
+List of cached modules.
+
+@field 
+@memberof module:requireLite
+@private
+@type Object
 
 */
 
 
-requireLite.ROOT = '';
+requireLite.cachedModules = {};
 
 
 /**
 
 Sequence generator for requireLite.
 
-@name SEQ
-@static
-@public
+@field 
+@memberof module:requireLite
+@protected
 @type Integer
 @default 'getTime() % 2147483648'
 
@@ -258,35 +296,66 @@ Sequence generator for requireLite.
 
 requireLite.SEQ = (new Date()).getTime() % 2147483648;
 
-/**
-
-RequireLite Configurations options.
-
-Currently no config options.
-
-@name config
-@static
-@public
-@type Object
-@default '{}'
-
-*/
-
-requireLite.CWD = '.';
-
-requireLite.config = {};
-
 requireLite.requireLite = requireLite;
 
 
+/**
+
+Always true since running in the brower. 
+Will be undefined if running under node-js require.
+
+@field 
+@memberof module:requireLite
+@type Boolean
+@default true
+
+*/
+
+requireLite.inBrowser = true; 
+
+
+
+/**
+
+Process completed xhr request
+
+@function 
+@memberof module:requireLite
+@param module {Object}  Module loading
+@param xhr {Object}  XML Http request
+
+@protected
+
+*/
+
 // Script loaded.
 requireLite.xhrComplete = function (module, xhr) {
-    var fn,push_CWD;
+    var fn,push_cwd,ctype,split;
     if (xhr.status === 200) { //  && xhr.getResponseHeader('Content-Type') === 'application/x-javascript') {
-        if (module.__filename.search(/\.htm/) > 0) {
+        // set ctype=html,json,css
+        var cExtn='js'; // Assume js
+
+        if ( xhr.getResponseHeader ) {
+            // If a real xhr
+            var cacheControl=xhr.getResponseHeader('Cache-Control');
+            // module.noCache=( cacheControl && ( cacheControl.search(/no-cache/i) >= 0));
+
+            var resContentType=xhr.getResponseHeader('Content-Type');
+
+            if (resContentType.search(/html/) > 0) cExtn='html';
+            if (resContentType.search(/javascript/) > 0) cExtn='js';
+            if (resContentType.search(/json/) > 0) cExtn='json';
+            if (resContentType.search(/css/) > 0) cExtn='css';
+        }
+        if (module.filename.search(/\.htm/) > 0) cExtn='html';
+        if (module.filename.search(/\.js/) > 0) cExtn='js';
+        if (module.filename.search(/\.json/) > 0) cExtn='json';
+        if (module.filename.search(/\.css/) > 0) cExtn='css';
+
+        if (cExtn=='html') {
             module.exports = window.document.createElement('div');
             module.exports.innerHTML = xhr.responseText;
-            module.exports.setAttribute('href',module.__filename);
+            module.exports.setAttribute('href',module.filename);
             // Load into body, So dont net detached DOM Trees, and Can view in Debug
             var TEMPLATES = window.document.getElementById('TEMPLATES');
             if ( !TEMPLATES ) {
@@ -296,9 +365,9 @@ requireLite.xhrComplete = function (module, xhr) {
                 window.document.body.appendChild(TEMPLATES);
             }
             TEMPLATES.appendChild(module.exports);
-        } else if (module.__filename.search(/\.json/) > 0) {
+        } else if (cExtn=='json') {
             module.exports = JSON.parse(xhr.responseText);
-        } else if (module.__filename.search(/\.css/) > 0) {            
+        } else if (cExtn=='css') {            
             module.exports = window.document.createElement("link");
             module.exports.setAttribute("rel", "stylesheet");
             module.exports.setAttribute("type", "text/css");
@@ -309,28 +378,44 @@ requireLite.xhrComplete = function (module, xhr) {
             // Some js to load.
             fn = new Function(['module', 'exports'], xhr.responseText);
 
-            push_CWD = requireLite.CWD;
-            requireLite.CWD = module.__dirname;
-            console.log('SET CWD='+requireLite.CWD);
+            // Set the cwd to allow other modules to be loaded. 
+            push_cwd = requireLite.cwd;
 
+            // Change requireLite.cwd to folder. 
+            split = module.filename.split('/');
+            split.pop();
+            requireLite.cwd = split.join('/') ;
+            if ( requireLite.cwd.length === 0 ) requireLite.cwd = '.';
+            requireLite.cwd += '/'; // WITH trailing slash
+            // console.log('debug:requireLite fn.call cwd='+requireLite.cwd);
             fn.call(this, module, module.exports);
+            requireLite.cwd = push_cwd;
 
-            requireLite.CWD = push_CWD;
-            console.log('RESET CWD='+requireLite.CWD);       
         }
         module.loaded = true;
 
 
         // If have callback(s) Call them
         while (module.callbacks.length > 0) {
-            console.log('requireLite: loaded callback ' + module.__filename);
+            // console.log('debug:requireLite: loaded callback ' + module.filename);
             module.callbacks.pop()(module.exports);
         }
     } else {
-        console.error('requireLite: Load of "' + module.__filename + '" fails status: ' + xhr.status);
+        console.log('WARNING:requireLite: load of "' + module.filename + '" fails status: ' + xhr.status);
     }
 };
 
+
+/**
+
+Load the module (initiate a XMLHttpRequest)
+
+@function 
+@memberof module:requireLite
+@param module {Object}  Module to load
+@protected
+
+*/
 
 requireLite.loadScript = function (module) {
     var xhr,
@@ -339,7 +424,7 @@ requireLite.loadScript = function (module) {
 
     async = (module.callbacks.length > 0);
 
-    url = module.__filename + '?nocache=' + module.__id;
+    url = module.filename + '?nocache=' + module.__id;
     if ((url.charAt(0) === '/') && (requireLite.ROOT)) 
        url = requireLite.ROOT + url;
 
@@ -348,6 +433,7 @@ requireLite.loadScript = function (module) {
         xhr = { status: 200, responseText : url  };
         requireLite.xhrComplete(module, xhr);
     } else {
+        xhr = new XMLHttpRequest();
         if (async) {
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4) {
@@ -355,7 +441,6 @@ requireLite.loadScript = function (module) {
                 }
             };
         }        
-        xhr = new XMLHttpRequest();
         xhr.open('get', url, async);
         xhr.send();
         if (!async) // sync
@@ -364,6 +449,7 @@ requireLite.loadScript = function (module) {
 };
 
 
+var require = requireLite;
 
 // Export, if loaded as a nodejs style require
 if (typeof module !== 'undefined') {

@@ -38,13 +38,13 @@ TicketDetailViewModel.prototype.render = function() { vmrLite.render( this.conta
 
 
 /**
- * Show the View. 
+ * open the View. 
  *
- * @method show
+ * @method open
  * @param container {String|DOMElement}
  */
 
-TicketDetailViewModel.prototype.show = function (container) {
+TicketDetailViewModel.prototype.open = function (container) {
     console.log('TicketDetailViewModel show',container);
     this.container = container;
     if (typeof this.container === 'string') { this.container = window.document.getElementById(this.container); }

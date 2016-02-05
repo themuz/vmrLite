@@ -31,7 +31,7 @@ ShowMessage.SHOW_MESSAGE_EVENT_TYPE = 'show-message';
 
 // Prototype CONSTANTS
 
-ShowMessage.prototype.TEMPLATE = requireLite('./ShowMessage.html');
+ShowMessage.prototype.TEMPLATE = require('./ShowMessage.html');
 
 // Prototype Methods
 
@@ -53,7 +53,7 @@ ShowMessage.prototype.onShowMessage = function (ev) {
    this.setMessage(ev.detail.message);
 };
 
-ShowMessage.prototype.show = function (container) {
+ShowMessage.prototype.open = function (container) {
     console.log('ShowMessage show',container);
     this.container = container;
     if (typeof this.container === 'string') { this.container = window.document.getElementById(this.container); }

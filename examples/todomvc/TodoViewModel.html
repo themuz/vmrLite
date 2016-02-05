@@ -21,13 +21,13 @@
     </span>
     <ul id="filters">
         <li>
-            <a href="#" vm-selected="list_filter_mode==''" vm-onclick='onClickFilter' set-filter=''>All</a>
+            <a href="#" vm-selected="list_filter_mode==''" vm-onclick='onClickFilter' data-filter=''>All</a>
         </li>
         <li>
-            <a href="#" vm-selected="list_filter_mode=='active'" vm-onclick='onClickFilter' set-filter='active'>Active</a>
+            <a href="#" vm-selected="list_filter_mode=='active'" vm-onclick='onClickFilter' data-filter='active'>Active</a>
         </li>
         <li>
-            <a href="#" vm-selected="list_filter_mode=='completed'" vm-onclick='onClickFilter' set-filter='completed'>Completed</a>
+            <a href="#" vm-selected="list_filter_mode=='completed'" vm-onclick='onClickFilter' data-filter='completed'>Completed</a>
         </li>
     </ul>
     <button id="clear-completed" vm-display="completedCount()" vm-onclick="onClickRemoveCompleted" >

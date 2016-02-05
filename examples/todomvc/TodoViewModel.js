@@ -1,10 +1,10 @@
 "use strict";
 
 
-/* global window, console, document, module, XMLHttpRequest, requireLite, vmrLite, partial */
+/* global window, console, document, module, XMLHttpRequest, require, vmrLite, partial */
 /* jshint globalstrict: true */
 
-var TodoModel = requireLite('TodoModel.js');
+var TodoModel = require('TodoModel.js');
 
 function TodoViewModel(container) {
     if (!(this instanceof TodoViewModel)) { // If invoked as a factory by mistake
@@ -27,7 +27,7 @@ function TodoViewModel(container) {
     this.editingIdx = -1;
 }
 
-TodoViewModel.DOM_TEMPLATE = requireLite('./TodoViewModel.html');
+TodoViewModel.DOM_TEMPLATE = require('./TodoViewModel.html');
 
 TodoViewModel.prototype.showThisItem = function (index) {
     return ( this.list_filter_mode === '') || // all
@@ -39,7 +39,7 @@ TodoViewModel.prototype.render = function () {
     vmrLite.render(this.container,this);
 };
 
-TodoViewModel.prototype.show = function (container) {
+TodoViewModel.prototype.open = function (container) {
     this.container = container;
     if (typeof this.container === 'string') { this.container = document.getElementById(this.container); }    
     this.container.innerHTML = ''; // Clear container.
@@ -89,7 +89,7 @@ TodoViewModel.prototype.onBlurEdit = function(ev) {
 };
 
 TodoViewModel.prototype.onClickFilter = function(ev) {
-    this.list_filter_mode=ev.target.getAttribute('set-filter');
+    this.list_filter_mode=ev.target.dataset.filter;
     this.render();
     return false;
 };

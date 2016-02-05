@@ -5,73 +5,91 @@
 
 /**
 
-# View Model Render Lite (vmrLite)
+### Render Object (View Model) within a html element.
 
-Render (associate) DOM elements with a JavaScript view model object. 
-Designed for HTML5 browsers (i.e. IE10+)
+Render (associate) DOM elements with a JavaScript (view model) object. 
+Rendering is controlled by special attribute tags within the html.
 
-Similar (sort of) to knockout. But much much simpler, and you control when to render/sync.
+Similar in principle to knockout, but simpler plus you control when to render/sync.
 
-Use with requireLite to dynamically load js and (partial) html.
-
-### Documented with jsdoc :-
+#### Documented with jsdoc :-
 
 Its documented, See .md OR on-line here [jsdoc vmrLite!](http://themuz.github.io/jsdoc/module-vmrLite.html).
 
-### Samples :-
+#### Samples :-
 
 And samples basic and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
 
-### Features :-
+#### Features :-
 
-- lightweight (i.e. very small ~300 lines of code, excl comments/white-space)
+- lightweight
 - js loaded using module pattern.
 - render (display) information from a JS Object within a DOM Tree
 - sync input elements back
 - supports repeating elements (e.g arrays) (see vm-each) to clone/create dom nodes.
-- include in your page. or load as a AMD module (i.e. require.js)
-- NO dependancies. 
+- include in your page. or load as a AMD module (see require.js)
+- NO dependencies. 
 - Add your own DOM extensions. 
 - sync/render when you want (NOT when framework thinks you should)
-- on-events - Are passed the event object. (and read like the old days)
+- on-events read as if the old way. eventListeners are handed for you.
 
-### Available Attributes at each DOM Element. 
+#### Available Attributes at each DOM Element. 
 
 vmrLite uses special attributes prefixed with "vm" (view model) to control dom/js mapping.
-The attributes value represent an expression (typically just a property) of the object to bind. 
+The attributes value represent an expression (typically just a property) of the object to evaluate. 
 
-Below are the core/common items (vm- prefixed)
+Below are the core/common items (vm-tagname) attributes
 
 - **text** - Bind to the elements.textContent to the specified object
 - **html** - Bind to the elements.innerHTML
 - **each** - Clone DOM element for each, corresponding array-like JS object
 - **with** - Sub-Elements are evaluated within (i.e. with) this object
-- **class** - Set/Unset Elements css class (based on truthy result of expression).
+- **class**-_name_ - Set/Unset Elements css class (based on truthy result of value-exp).
 - **id** - Bind to element.id
-- **display** - Set/Clear a elements.style.display based of truthy of a JS element (i.e. sets to none if falsy)
+- **display** - Set/Clear a elements.style.display based of truthy value-exp  (i.e. sets to none if expression falsy)
 - **onclick** - Link a click event to function call, all functions are bind'ed to the view model and receive the event object as a parameter
 - **on**-_type_ - Link a event of "type" to a function (e.g. vm-onclick === vm-on-click )
+- **attr**-_name_ - Set the attribute _name_ to result of value-exp
+- **data**-_name_ - Set the data-_name_ attribute to result of value-exp
+- **debug** - Dump a debug message, console.log the value-exp result.
+- **disabled** - Set/Clear the elements disabled property AND css-class, based on truthy of value-exp 
+- **readonly** - Set/Clear the elements readonly property AND css-class, based on truthy of value-exp 
+- **required** - Set/Clear the elements required property AND css-class, based on truthy of value-exp 
+- **selected** - Set/Clear the elements selected property AND css-class, based on truthy of value-exp 
 - **more** - For full details, see the documentation (or read the code, its only ~100 lines!!)
 - **custom** - Add your own. Just create a function. e.g `vmrLite.tagFns['myslide'] = function (tag,elem,viewModel) { ... }`
 
+#### Expression Evaluation
 
-### Expressions 
+within each vm-tagname-param="value-exp", the following free are variables available.
+and value expression is evaluated  with the variables "root" and "this" properties exposed directly (within a with statement)
 
-    Expressions withing the html are avaliated, with the following variables availab.e
+- **root** - The "root" View Model (previously named "vm")
+- **this** - The object within the vm-with/vm-each (same as root for top level)
+- **index** - null or index (0 based) of the item within a vm-each item.
 
-    - vm - The View Model
-    - this - The object within the vm-with/vm-each (or view-model if root)
-    - index - null or index within a vm-each.
+Examples.
 
-### Usage Render (ViewModel => DOM)
+    <span vm-text="name"></span>
+    <span vm-text="'The name is' + this.name + '.'"></span>
+    <span vm-text="'At the top level vm and this are the same ' + root.name + '.'"></span>
+
+#### vm tag naming
+
+the vm-tags are made up of two parts as vm-tagname-param where
+
+- tagname - is the action to perform e.g. (on/attr)
+- param - optional, param for the action, the actual meaning depends on the tag (e.g. vm-on-click="function", vm-attr-required="expr")
+
+#### Usage Render (ViewModel => DOM)
 
     vmrLite.render(containerElement, viewModelObj);
 
-### Usage Sync (DOM Input elements => ViewModel)
+#### Usage Sync (DOM Input elements => ViewModel)
 
     vmrLite.sync(containerElement, viewModelObj);
 
-### Example
+#### Example
 
 A simple example, (based on [knockoutjs](http://knockoutjs.com/) live example, to allow comparision.)
 
@@ -108,7 +126,7 @@ js
         // Add sync/render for convenience
         this.sync = function() { vmrLite.sync( this.container, this ); };
         this.render = function() { vmrLite.render( this.container, this ); };
-        this.show = function(container) { 
+        this.open = function(container) { 
             this.container = container;
             vmrLite.render( this.container, this );
         };  
@@ -128,15 +146,19 @@ js
         return this; // Not needed, as this is the default.
     }
 
-
 index.html
 
     <script language="JavaScript" type="text/JavaScript">
-        (new TicketsViewModel()).show(document.getElementById('ticketsView'));
+        (new TicketsViewModel()).open(document.getElementById('ticketsView'));
     </script>
 
-### Outstanding items
-- Enhance evalWith, to look for plain properties, before using the more complex eval using new Function. (speed increase x8+)
+#### Change log
+
+    2016-02-04 renamed the free variable (with expression evaluation) from "vm" -> "root"
+    2016-02-04 removed module.__dirname as in-consistent with CommonJS (use require.cwd as a replacement)
+
+#### TODO
+- Enhance evalWith, to look for plain properties, before using the more complex evaluation using "new Function"
 
 @module vmrLite
 
@@ -153,39 +175,41 @@ if (!String.prototype.compare) {
 }
 
 
-/** 
+/*
 
 Class name for the object
 
-@name className
+@field
+@memberof module:vmrLite
 @type String
-@static
 @default "vmrLite"
-@readonly 
+
 */
 
 vmrLite.className = 'vmrLite';
 
 
-/** 
+/**
+
 
 Version of the library
 
-@name version
+@field
+@memberof module:vmrLite
 @type String
-@static
-@readonly 
+@default "0.4"
+
 */
 
-vmrLite.version = '1.1';
+vmrLite.version = '0.4';
 
-/**
+/*
 
 Simple sequence number, used to allocate unique id's.
 
-@name SEQ
+@field
+@memberof module:vmrLite
 @type Number
-@static
 @default "getTime() % 16777215"
 
 
@@ -194,32 +218,12 @@ Simple sequence number, used to allocate unique id's.
 vmrLite.SEQ = (new Date()).getTime() % 16777215;
 
 
-/*
-Add an event listener addEventListener, and return hash of parameters,
-that can subsequently be used to call removeEventListener
-
-@method UNUSED_eventOn
-@static
-@public
-@param elem {HTMLElement }  element to add listener to
-@param type {String}  event type to listen for. (e.g. click )
-@param listener {Function} Function that receives a notification when an event of the specified type occurs
-@return {Object} { elem: elem, type: type, listener:listener }
-*/
-
-vmrLite.UNUSED_eventOn = function (elem, type, listener) {
-    if (elem.jquery) { elem = elem.get(0); } // Want plain elem (not jQuery)
-
-    elem.addEventListener(type, listener, false); // false=DONT useCapture
-    return { elem: elem, type: type, listener: listener };
-};
-
 /**
-Trigger an event, e.g. 'click', 'close'. uses document.createEvent internally for compatibility.
 
-@method triggerEvent
-@static
-@public
+ Helper.  Trigger an event, e.g. 'click', 'close'. uses document.createEvent internally for compatibility.
+
+@function
+@memberof module:vmrLite
 @param elem {HTMLElement }  element that triggers the event. (i.e. will become events ev.target)
 @param etype {String}  event type to trigger. (e.g. click )
 @param detail {Object} Object to pass to the event, (available within the event as detail (e.g ev.detail))
@@ -242,12 +246,11 @@ vmrLite.triggerEvent = function (elem, etype, detail) {
 };
 
 /**
-Set/Clear the className base on parameters
-USed as replacement for elem.classList.toggle as IE10 does not support the 2nd boolean parameter
+ Helper.  Set/Clear the className base on parameters
+Used as replacement for elem.classList.toggle as IE10/11 does not support the 2nd boolean parameter
 
-@method setClass (Helper)
-@protected
-@static
+@function
+@memberof module:vmrLite
 @param elem {HTMLElement }  element set/clear class name from
 @param className {String}  className to set/clear
 @param setORclear {Boolean} set (true), clear (false) the className
@@ -281,24 +284,38 @@ Code is effectively with ( vm ) { with ( this ) { return expr }}
 
 TODO: Remove assigning null;s
 
-@method evalWith
+@function
+@memberof module:vmrLite
 @protected
-@static
 @param expr {String}  String to evaluate
 @param withObj {Object}  Object to evaluate with (expression bound to this)
 @param viewModelObj {Object}  Outer object, may be same as withObj
 @param index {Number} If withObj is the Object within an array index is the index.
-
-
 @return {Object} result of evaluation.
+
 */
 
 vmrLite.evalWith = function (expr, withObj, viewModelObj, index) {
-    var fn;
+    var fn,retval,thisObj,thisExpr;
     // return withObj[expr];
-    fn = new Function(['vm', 'index'], 'with ( vm ) { with ( this ) { return ' + expr + ' }}' );
+    // 2016-01-20 Renamed "vm" to "root" as more of a generic name 
+    fn = new Function(['root', 'index'], 'with ( root ) { with ( this ) { return ' + expr + ' }}' );
     try {
-        return fn.call(withObj, viewModelObj, index);
+        retval = fn.call(withObj, viewModelObj, index);
+        if ( typeof(retval) === 'function' ) {
+            // 2016-01-20 Bind the function to its "this" object (or this==withObj), Was by default bound to the viewModelObj
+            // If not explicitly defined. Assume is the viewModelObj (or this==withObj)
+            thisObj = viewModelObj;
+            thisExpr = expr.replace(/\.[^\.]*$/,''); // this.fname => this 
+            if ( thisExpr != expr ) { 
+                // We do a an expression of the form "object.fname" 
+                thisObj = vmrLite.evalWith(thisExpr,withObj,viewModelObj,index);
+            }
+            retval = retval.bind( thisObj );
+        }
+        if (retval && retval.toISOString) { retval = vmrLite.stripZeroTime(retval.toISOString()); }
+
+        return retval;
     } catch (ex) {
         console.error(' vmrLite.evalWith( "' + expr + '") ' + ex.message );
         // HACK create object
@@ -311,9 +328,9 @@ vmrLite.evalWith = function (expr, withObj, viewModelObj, index) {
 /*
 Assign "value" to the "expr" within scope of withObj and viewModel.
 
-@method assignWith
+@function
+@memberof module:vmrLite
 @protected
-@static
 @param value {Object}  String to assign
 @param expr {String}  Expression to assign
 @param withObj {Object}  Object to evaluate with (expression bound to this)
@@ -334,11 +351,11 @@ vmrLite.assignWith = function (value, expr, withObj, viewModelObj, index) {
 
 
 /**
-Find the closest Element, up the DOM tree from el, with anattribute of index. and return its index (as a Number)
+ Helper.  Find the closest Element, up the DOM tree from el, with anattribute of index. and return its index (as a Number)
 
-@method closestIndex (Helper)
-@static
-@public
+@function
+@memberof module:vmrLite
+@param elem {HTMLElement}  
 @param el {Element} Element to search up from
 @return {Number} Value of 'index' attribute.
 */
@@ -363,14 +380,13 @@ vmrLite.closestIndex  = function (el) {
 };
 
 /**
-Delete the row/element of a vmr-each, re-numbering child siblings, as we go.
+ Helper.  Delete the row/element of a vm-each, re-numbering child siblings, as we go.
 
-Used for efficient rendering, Use where content main contains another view-models/html
+Used for Manually rendering, Use where content main contains another view-models/html
 i.e. Manually delete a repeating element, on behalf of the render
 
-@method deleteEachElem
-@static 
-@public
+@function
+@memberof module:vmrLite
 @param delElem {Element} Element to delete (must contain the "index" attribute)
 */
 
@@ -402,17 +418,16 @@ vmrLite.deleteEachElem = function (delElem) {
 
 
 /*
-Build the each, adding clones of the vmr-each element. as siblings.
+Build the each, adding clones of the vm-each element. as siblings.
 
 TODO: If each has an "id" attribute method, use that to re-render via moving DOM elements
 rather than replacing the content. (note use an algorithm that swaps dom elements, so if list
 is ordered then reversed this is efficient)
-TODO: If a repeating options (within a select), use v0.1 implementation and don't hide/reserve the vmr-each element.
+TODO: If a repeating options (within a select), use v0.1 implementation and don't hide/reserve the vm-each element.
 
-@method buildEach
-@protected
-@static 
-@param elem {Element}  HTML Element with the vmr-each tag.
+@function
+@memberof module:vmrLite
+@param elem {Element}  HTML Element with the vm-each tag.
 @param withObj {Object}  Object to evaluate with (expression bound to this)
 @param viewModelObj {Object}  Outer object, may be same as withObj
 @param index {Number} If withObj is the Object within an array index is the index.
@@ -484,17 +499,26 @@ vmrLite.buildEach = function (elem, withObj, viewModelObj, index) {
 // use when method requires, full rendering 1st to operate.
 vmrLite.afterRenderApply = []; // Array of { fn: function , args: argsArray } to call after render complete
 
+/**
+Hash of available tag functions.
+
+@field
+@memberof module:vmrLite
+@type Object
+
+*/
+
 vmrLite.tagFns = {};
 
 /**
 Perform the tag function. All tag functions have the same parameters
 
-A tag is expressed as vmr-tagname-param="value-expr" in the html
+A tag is expressed as vm-tagname-param="value-expr" in the html
 
-@method tagFns_base
+@function
+@memberof module:vmrLite
 @protected
-@static 
-@param tag {Object} Details of the attribute tag. tag is expressed as vmr-tagname-param="value-expr"
+@param tag {Object} Details of the attribute tag. tag is expressed as vm-tagname-param="value-expr"
 @param tag.name {String} Tag Name 
 @param tag.param {String} Param (or blank string)
 @param tag.value {String} The value-expr
@@ -507,14 +531,13 @@ vmrLite.tagFns.base = function (tag, elem) {}; // noop operator.
 /**
 Set the innerHTML property of the element (see tagFns for details).
 
-vmr-html="expr" => elem.innerHTML = tag.result
+vm-html="expr" => elem.innerHTML = tag.result
 
-If the result is text, use vmr-text. as html is NOT escaped.
+If the result is text, use vm-text. as html is NOT escaped.
 
-@method tagFns_html
-@inner
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 
@@ -527,11 +550,11 @@ vmrLite.tagFns.html = function (tag, elem) {
 /**
 Set the textContent property of the element (see tagFns for details)
 
-vmr-text="expr" => elem.textContent = tag.result
+vm-text="expr" => elem.textContent = tag.result
 
-@method tagFns_text
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -539,11 +562,30 @@ vmrLite.tagFns.text = function (tag, elem) {
     elem.textContent = tag.result; // (IE=innerText) IE9+ ok
 };
 
+/**
+Set the attribute "title"
+
+@function
+@memberof module:vmrLite
+@protected
+@param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
+@param elem {Element} HTML element containing attribute tag
+*/
+
 vmrLite.tagFns.title = function (tag, elem) {
     elem.setAttribute('title', tag.result);
 };
 
-// Non Breaking text
+/**
+Set the textContent property of the element with non-breaking spaces.
+
+
+@function
+@memberof module:vmrLite
+@protected
+@param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
+@param elem {Element} HTML element containing attribute tag
+*/
 vmrLite.tagFns.nbtext = function (tag, elem) {
     elem.textContent = String(tag.result).
         replace(/\-/g,'\u2011').
@@ -554,11 +596,11 @@ vmrLite.tagFns.nbtext = function (tag, elem) {
 /**
 Set the id property of the element (see tagFns for details)
 
-vmr-id="expr" => elem.id=tag.result
+vm-id="expr" => elem.id=tag.result
 
-@method tagFns_id
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -571,11 +613,11 @@ vmrLite.tagFns.id = function (tag, elem) {
 Set/Clear the css style.display "none" property of the element (see tagFns for details).
 if tag.result is truthy set to '' else 'none'.
 
-vmr-display="expr" => elem.style.display = ( tag.result ? '' : 'none' );
+vm-display="expr" => elem.style.display = ( tag.result ? '' : 'none' );
 
-@method tagFns_display
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -588,13 +630,15 @@ vmrLite.tagFns.display = function (tag, elem) {
 
 /**
 Set/Get the value property of the element (see tagFns for details).
-If the element type is a 'checkbox' it sets checked based on result
 
-vmr-value="expr" => elem.value=tag.result
+If the element type is a 'checkbox' it sets checked based on truthy result of value-exp.
+If the element type is a 'radio' it sets checked based on  ( value-exp == radio button value attribute).
 
-@method tagFns_value
+vm-value="expr" => elem.value=tag.result
+
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -611,30 +655,30 @@ vmrLite.tagFns.value = function (tag, elem) {
 /**
 Set/clear the class defined by the tag parameter and truthy result value.
 
-vmr-class-param="expr" => elem.classList.toggle(tag.param,!!tag.result)
+vm-class-param="expr" => elem.classList.toggle(tag.param,!!tag.result)
 
-@method tagFns_class
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
 
 vmrLite.tagFns.class = function (tag, elem) {
     vmrLite.setClass(elem, tag.param, !!tag.result);
-    //vmrLite.classList_toggle(elem,tag.param,!!tag.result);
+    //vmrLite.classList.toggle(elem,tag.param,!!tag.result); // Not support IE 10 !!
 };
 
 /**
 Set the elements style as defined by the tag parameter  (see tagFns for details).
 
-vmr-style-param="expr" => elem.style[tag.param] = tag.result;
+vm-style-param="expr" => elem.style[tag.param] = tag.result;
 
-e.g vmr-style-width="this.boxWidth()"
+e.g vm-style-width="this.boxWidth()"
 
-@method tagFns_style
+@function
+@memberof module:vmrLite
 @protected
-@static
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 
@@ -647,10 +691,37 @@ vmrLite.tagFns.style = function (tag, elem) {
     elem.style[tag.param] = tag.result;
 };
 
+/**
+Set the elements attribute as defined by the tag parameter  (see tagFns for details).
+
+vm-attr-param="expr" => elem.setAttribute(tag.param,tag.result);
+
+@function
+@memberof module:vmrLite
+@protected
+@param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
+@param elem {Element} HTML element containing attribute tag
+
+*/
 
 vmrLite.tagFns.attr = function (tag, elem) {
     elem.setAttribute(tag.param,tag.result);
 };
+
+/**
+Set the elements dataset/data-attribute as defined by the tag parameter  (see tagFns for details).
+
+NOTE: setAttribute (vs dataset) is used internally since faster in IE !!. 
+
+vm-attr-param="expr" => elem.setAttribute('data-'+tag.param,tag.result);
+
+@function
+@memberof module:vmrLite
+@protected
+@param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
+@param elem {Element} HTML element containing attribute tag
+
+*/
 
 vmrLite.tagFns.data = function (tag, elem) {
     elem.setAttribute('data-'+tag.param,tag.result);
@@ -660,9 +731,9 @@ vmrLite.tagFns.data = function (tag, elem) {
 Dump a debug message the "tag.result" to the console, 
 
 
-@method tagFns_debug
+@function
+@memberof module:vmrLite
 @protected
-@static
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -671,13 +742,13 @@ vmrLite.tagFns.debug = function (tag, elem) {
     elem.setAttribute('debug', tag.result);
 };
 /**
-Set/Clear the elements readOnly property AND style  (see tagFns for details).
+Set/Clear the elements readonly property AND css class  (see tagFns for details).
 
-vmr-readOnly="expr" => elem.readonly = !!tag.result; vmrLite.classList.toggle(elem,'readonly',!!tag.result);
+vm-readOnly="expr" => elem.readonly = !!tag.result; vmrLite.classList.toggle(elem,'readonly',!!tag.result);
 
-@method tagFns_readOnly
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -690,13 +761,13 @@ vmrLite.tagFns.readonly = function (tag, elem) {
 };
 
 /**
-Set/Clear the elements disabled property AND style  (see tagFns for details).
+Set/Clear the elements disabled property AND css class  (see tagFns for details).
 
-vmr-readOnly="expr" => elem.disabled = !!tag.result; vmrLite.classList.toggle(elem,'disabled',!!tag.result);
+vm-readOnly="expr" => elem.disabled = !!tag.result; vmrLite.classList.toggle(elem,'disabled',!!tag.result);
 
-@method tagFns_disabled
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -708,13 +779,13 @@ vmrLite.tagFns.disabled = function (tag, elem) {
 };
 
 /**
-Set/Clear the elements required property AND style  (see tagFns for details).
+Set/Clear the elements required property AND css class  (see tagFns for details).
 
-vmr-required="expr" => elem.required = !!tag.result; vmrLite.classList.toggle(elem,'required',!!tag.result);
+vm-required="expr" => elem.required = !!tag.result; vmrLite.classList.toggle(elem,'required',!!tag.result);
 
-@method tagFns_required
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -727,13 +798,13 @@ vmrLite.tagFns.required = function (tag, elem) {
 };
 
 /**
-Set/Clear the elements selected property AND style  (see tagFns for details).
+Set/Clear the elements selected property AND css class  (see tagFns for details).
 
-vmr-required="expr" => elem.selected = !!tag.result; vmrLite.classList.toggle(elem,'selected',!!tag.result);
+vm-required="expr" => elem.selected = !!tag.result; vmrLite.classList.toggle(elem,'selected',!!tag.result);
 
-@method tagFns_selected
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -749,9 +820,9 @@ vmrLite.SUPPORTED_EVENTS_HASH = { 'onclick': true, 'onkeyup': true, 'onblur': tr
 Event handler, used by on-blur, If CR is pressed, call event targerts onblur function
 which will inturn call onchange.
 
-@method tagFns_onEnterCallBlur
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param ev {Event} Event object
 */
 
@@ -768,11 +839,11 @@ vmrLite.onEnterCallBlur = function (ev) {
 Attach a event to the Element. tag.param is the event to. tag.result MUST be a function.
 Automatically binds the function to the viewModelObj
 
-vmr-in-param="expr" => elem['on'+param] = tag.result.bind(viewModelObj);
+vm-in-param="expr" => elem['on'+param] = tag.result.bind(viewModelObj);
 
-@method tagFns_on
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 @param viewModelObj {Object}  Outer object, used to bind the function to.
@@ -797,9 +868,9 @@ vmrLite.tagFns.on = function (tag, elem) {
 /**
 Attach a onClick event to the Element. Short/Alias for vm-on-click. See tagFns.on
 
-@method tagFns_onclick
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 @param viewModelObj {Object}  Outer object, used to bind the function to.
@@ -814,11 +885,11 @@ vmrLite.tagFns.onclick = function (tag, elem) {
 /**
 Set focus to the Element. Focus is put back in the event queue, so render completes before focus,
 
-vmr-focus="expr" => if ( result ) window.setTimeout( function() { elem.focus() }, 100 );
+vm-focus="expr" => if ( result ) window.setTimeout( function() { elem.focus() }, 100 );
 
-@method tagFns_focus
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -850,9 +921,9 @@ Elem is assumed to be the scrolling table.
 Elem.parent is assumed to be the containing scrollable div.
 Elem.parent.previousElementSibling is assumed to be the header table to sync.
 
-@method tagFns_synctdth
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param elem {Element} HTML element containing attribute tag
 */
@@ -868,9 +939,9 @@ See synctdth for details.
 
 This is the actual implementation for synctdth, called after render is complete.
 
-@method tagFns.synctdth-after
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param tag {Object} Details of the attribute tag/value/result (see tagFns for details)
 @param bodyTable {Element} HTML element containing bodyTable tag
 */
@@ -885,7 +956,7 @@ vmrLite.tagFns['synctdth-after'] = function (tag, bodyTable) {
     /*
 
      <!-- Heading -->
-     <table class="vmr-table">
+     <table class="vm-table">
          <thead/tbody>
              <tr>
                  <th/td>Heading 1</th/td>
@@ -894,9 +965,9 @@ vmrLite.tagFns['synctdth-after'] = function (tag, bodyTable) {
          </thead/tbody>
      </table>
      <!-- Scrolling Area -->
-     <div class="vmr-scroll-outer">  <!-- Need div inline-block height :fixed here for IE to get scroll correct -->
+     <div class="vm-scroll-outer">  <!-- Need div inline-block height :fixed here for IE to get scroll correct -->
      <!-- Inner Main Table -->
-         <table class="vmr-table vmr-scroll" vmr-alignscroll="true">    //
+         <table class="vm-table vm-scroll" vm-alignscroll="true">    //
              <tbody>
                  <tr>
                      <td>Col 1</td>
@@ -955,9 +1026,9 @@ vmrLite.tagFns['synctdth-after'] = function (tag, bodyTable) {
 
 Render child objects of an Element. (Internal Use)
 
-@method renderChildren
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param elem {Element} Element to apply elem.children
 @param withObj {Object}  Object to evaluate with (expression bound to this)
 @param viewModelObj {Object}  Outer object, may be same as withObj
@@ -976,6 +1047,18 @@ vmrLite.renderChildren = function (elem, withObj, viewModelObj, index) {
     }
 };
 
+
+/**
+
+ Helper.  Strip the trailing 00's from a DateTime ISO String   (Internal Use)
+
+@function
+@memberof module:vmrLite
+@param str {String} String to strip
+
+*/
+
+
 vmrLite.stripZeroTime = function (str) {
   if ( !str ) return str;
   return str.replace(/T00\:00\:00.000Z|\:00\.000Z|\.000Z/,'');
@@ -987,9 +1070,9 @@ Render this Element. (Internal Use)
 
 Child elements are rendered, unless element is itself a container for another rendered object.
 
-@method renderElement
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param elem {Element} Element to render
 @param withObj {Object}  Object to evaluate with (expression bound to this)
 @param viewModelObj {Object}  Outer object, may be same as withObj
@@ -1010,7 +1093,7 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
     // on a inner element (for speed) it will get a vm-container as well.
     // FOr this to work OK. the view model mus have a ".id" or "._id" property.
 
-    parseChildren = ( !vmID || ( vmID == viewModelObj.id ) || ( vmID == viewModelObj._id ));
+    parseChildren = (( vmID == null )  || ( vmID == viewModelObj.id ) || ( vmID == viewModelObj._id ));
 
     if (!withObj) {
         elem.style.display = 'none';
@@ -1042,7 +1125,7 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
             return; // No-elements nothing to do.
         }
         // Drop thru, and process the with.
-        return; // vm-each special and is hidden.
+        return; // vm-each special and is ALWAYS hidden return. vm-withs will of been created.
     }
     // Process with
     attrValue = elem.getAttribute('vm-with');
@@ -1083,8 +1166,8 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
                 tag.result = vmrLite.evalWith(tag.value, withObj, viewModelObj, index);
                 if (typeof tag.result === 'undefined') { tag.result = '(?)'; }
                 // 2016-01-03 bug fix, as double wrapping and should be bound to withObj (not viewModelObj)
-                if (typeof tag.result === 'function') { tag.result = tag.result.bind(withObj); }
-                if (tag.result && tag.result.toISOString) { tag.result = vmrLite.stripZeroTime(tag.result.toISOString()); }
+                // 2016-01-16 Change back to view model. As event function should be defined at the view model level..
+                // 2016-01-20 Moved bind. to the evalWith. and changed back to use the withObj
 
                 tagFn = vmrLite.tagFns[tag.name];
                 if (!tagFn) {
@@ -1105,11 +1188,10 @@ Render view Model to a container Element, (and its children) (The main function)
 
 i.e View Model ===> DOM
 
-@method render
-@public
-@static 
+@function
+@memberof module:vmrLite
 @param containerElement {Element} Root Element to render from
-@param viewModelObj {Object}  Outer View object
+@param viewModelObj {Object}  Outer View Model object
 */
 
 vmrLite.render = function (containerElement, viewModelObj) {
@@ -1118,39 +1200,35 @@ vmrLite.render = function (containerElement, viewModelObj) {
     // console.log('render ' + containerElement.id );
 
     if (containerElement.jquery) { containerElement = containerElement.get(0); } // Want plain elem (not jQuery)
-    // We dont process the containerElement, only the children
+
+    if (!viewModelObj) {
+        containerElement.style.display = 'none';
+        return;
+    }    
+
     vmID = containerElement.getAttribute('vm-container'); 
-    // Add update vm-container id, for viewModels inside viewModels
+    // This is the main render call, (or a inner call called manually to optimize rendering). 
+    // vmID MUST match the viewModelObj.id/_id
     if ( !vmID || (( vmID != viewModelObj.id ) && ( vmID != viewModelObj._id ))) {
-        // Update id. As developer may/should of added a vm-container attribute,
-        // To the div, if have a viewModel inside a viewModel 
-        // So outer view model does not in 1st render, enter another models html 
+        // Update id. As application has explicitley rendered here !!
+        // This may be another id, from the app cloning elements, or app changing id of the view-model object.
+        // NOTE: To stop an outer view model, from attempting to render a inner Viewmodel set vm-container="" on the inner
         vmID = viewModelObj.id;
-        if (!vmID) { 
+        if (!vmID) {
             vmID = viewModelObj._id; 
-            if (!vmID) { 
+            if (!vmID) {
                 vmID = vmrLite.SEQ++; 
                 viewModelObj._id = vmID;
             }
         }
-        containerElement.setAttribute('vm-container', vmID);        
+        containerElement.setAttribute('vm-container', String(vmID));        
     }
-    if (!containerElement.getAttribute('vm-container')) { // No root tag, add one
-        tag = viewModelObj.id;
-        if (!tag) { tag = viewModelObj._id; }
-        if (!tag) { tag = vmrLite.SEQ++; }
-        containerElement.setAttribute('vm-container', String(tag));
-    }
-    if (!viewModelObj) {
-        containerElement.style.display = 'none';
-        return;
-    }
+
     vmrLite.renderChildren(containerElement, viewModelObj, viewModelObj, null);
 
     while (vmrLite.afterRenderApply.length > 0) {
         after = vmrLite.afterRenderApply.pop();
         after.fn.apply(this, after.args);
-
     }
     vmrLite.afterRenderApply = []; // Reinit.
 };
@@ -1159,9 +1237,9 @@ vmrLite.render = function (containerElement, viewModelObj) {
 
 Sync child input objects of an Element to a view model. (Internal Use)
 
-@method syncChildren
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param elem {Element} Element to apply elem.children
 @param withObj {Object}  Object to assign with (assignment bound to this)
 @param viewModelObj {Object}  Outer object, may be same as withObj
@@ -1179,11 +1257,13 @@ vmrLite.syncChildren = function (elem, withObj, viewModelObj, index) {
 
 /*
 
-Sync input objects of an Element to a view model. (Internal Use)
+Sync input objects of an Element to a view model. (Internal Use).
 
-@method syncChildren
+Note for a radio button, If NO items are checked the vm's value is not changed.
+
+@function
+@memberof module:vmrLite
 @protected
-@static 
 @param elem {Element} Element to apply elem.children
 @param withObj {Object}  Object to assign with (assignment bound to this)
 @param viewModelObj {Object}  Outer object, may be same as withObj
@@ -1194,7 +1274,12 @@ vmrLite.syncElement = function (elem, withObj, viewModelObj, index) {
     var aAttrs, attr, i, attrValue, parseChildren,
         val, expr;
 
-    parseChildren = !elem.getAttribute('vm-container'); // Dont go deeper if, this is another objects container !!
+    var vmID = elem.getAttribute('vm-container'); 
+    // Don't go deeper if, this is another objects container !! but DO if me.
+    // MS: 2015-03-11 bug fix. If optimize and render same object
+    // on a inner element (for speed) it will get a vm-container as well.
+    // FOr this to work OK. the view model mus have a ".id" or "._id" property.
+    parseChildren = (( vmID === null )  || ( vmID == viewModelObj.id ) || ( vmID == viewModelObj._id ));
 
     if (elem.getAttribute('vm-each')) { return; }
 
@@ -1248,11 +1333,10 @@ Sync view Model from container "input" Elements, (and its children) (The main fu
 
 i.e DOM (input's) ===> View Model
 
-@method sync
-@public
-@static 
-@param viewModelObj {Object}  The View Model Object
-@param containerElement
+@function
+@memberof module:vmrLite
+@param containerElement {Element} Root Element to sync from
+@param viewModelObj {Object}  Outer View Model object
 */
 
 vmrLite.sync = function (containerElement, viewModelObj) {
@@ -1263,15 +1347,15 @@ vmrLite.sync = function (containerElement, viewModelObj) {
 
 
 
-/*
+/**
 
-Clear the elem.on events, on the element and those of the children.
+ Helper.  Clear the elem.on events, on the element and those of the children.
 
-BE TIDY. Call before Dom objects are deleted, to free/clear any references.
+Call to free/clear any references from Dom nodes to your fns. 
+Alternatively use vmrLite.clear.
 
-@method clearOnEventsElement
-@protected
-@static 
+@function
+@memberof module:vmrLite
 @param elem {Element} Element clear on events from
 */
 
@@ -1296,11 +1380,10 @@ vmrLite.clearOnEventsElement = function (elem) {
 
 /*
 
-Clear the on events, for children of the element
+ Helper.  Clear the on events, for children of the element
 
-@method clearOnEventsChildren
-@protected
-@static 
+@function
+@memberof module:vmrLite
 @param elem {Element} Element clear on events from
 */
 
@@ -1314,14 +1397,14 @@ vmrLite.clearOnEventsChildren = function (elem) {
 
 /**
 
-Clear an Element. i.e. Set .innerHTML = '';
+ Helper.  Clear an Element. i.e. Set .innerHTML = '';
 Also clears any events on element and children before clearing.
+See also clearOnEventsChildren
 
-BE TIDY. Call to clear a node.
+Call to free/clear any references from Dom nodes to your fns. 
 
-@method empty
-@public
-@static 
+@function
+@memberof module:vmrLite
 @param elem {Element} Element to clear/blank
 */
 
@@ -1329,34 +1412,12 @@ vmrLite.empty = function (containerElement) {
     if (containerElement.jquery) { containerElement = containerElement.get(0); } // Want plain elem (not jQuery)
     // console.log('EMPTY ' + containerElement.id + ' ' + containerElement.href, containerElement);
 
-    vmrLite.clearOnEventsElement(containerElement); // MS: BUG fix, was clearOnEventsChildren, BUT Need to clear the onEvent at this node.
+    vmrLite.clearOnEventsChildren(containerElement); // MS: BUG fix, was clearOnEventsChildren, BUT Need to clear the onEvent at this node. 
+    // MS: Changed back, Dont think on review you should call clearOnEventsElement as we dont render the container div. Only the children !!
     while (containerElement.firstChild) {
       containerElement.removeChild(containerElement.firstChild);
     }
     //containerElement.innerHTML = '';
-};
-
-
-
-/**
-
-Show view in a Modal Dialogue.
-
-Creates a new ShowModalViewModel, then calls its showModal(arugments)
-
-=== NOTE: Only available if ShowModalVM.js included.
-
-#### see also ShowModalViewModel
-
-@method showModal
-@static
-@public
-@param innerViewModel {Object} View model, to show within a modal dialogue.
-
-*/
-
-vmrLite.showModal = function (innerViewModel) {
-  console.error('Please include vmrLite-ShowModal to enable.');
 };
 
 

@@ -35,7 +35,7 @@ section {
 
 function injectPartialTicketEdit() {
     var ViewModel = requireLite('TicketEditViewModel');
-    var vm = new ViewModel().show('ticketEditContainer');    
+    var vm = new ViewModel().open('ticketEditContainer');    
     //vmrLite.partial({url: '_ticketEdit', container: 'ticketEditContainer'});
 }
 
@@ -46,13 +46,13 @@ function closePartialTicketEdit() {
 function onBodyLoad() {
     //injectPartialTicketEdit();
     var ViewModel = requireLite('TicketListViewModel');
-    var vm = new ViewModel().show('ticketListContainer');
+    var vm = new ViewModel().open('ticketListContainer');
 
     ViewModel = requireLite('TicketDetailViewModel');
-    vm = new ViewModel().show('ticketDetailContainer1');
+    vm = new ViewModel().open('ticketDetailContainer1');
 
     ViewModel = requireLite('TicketDetailViewModel');
-    vm = new ViewModel({ altView : true }).show('ticketDetailContainer2');
+    vm = new ViewModel({ altView : true }).open('ticketDetailContainer2');
 }
 
 </script>

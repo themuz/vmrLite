@@ -33,7 +33,7 @@ function TicketsViewModel(config) {
     // Add sync/render for convenience
 	this.sync = function() { vmrLite.sync( this.container, this ); };
 	this.render = function() { vmrLite.render( this.container, this ); };
-    this.show = function(container) { 
+    this.open = function(container) { 
         this.container = container;
         vmrLite.render( this.container, this );
     };	
@@ -76,7 +76,7 @@ function TicketsViewModel(config) {
     </div>
 </fieldset>
 <script language="JavaScript" type="text/JavaScript">
-    (new TicketsViewModel()).show(document.getElementById('ticketsView'));
+    (new TicketsViewModel()).open(document.getElementById('ticketsView'));
 </script>
 </body>
 

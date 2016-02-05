@@ -70,14 +70,14 @@ TicketListViewModel.prototype.addEventListeners = function () {
 };
 
 /**
- * Show the View. 
+ * Open the View. 
  *
- * @method show
+ * @method open
  * @param container {String|DOMElement}
  */
 
-TicketListViewModel.prototype.show = function (container) {
-    console.log('TicketListViewModel show',container);
+TicketListViewModel.prototype.open = function (container) {
+    console.log('TicketListViewModel open',container);
     this.container = container;
     if (typeof this.container === 'string') { this.container = window.document.getElementById(this.container); }
 

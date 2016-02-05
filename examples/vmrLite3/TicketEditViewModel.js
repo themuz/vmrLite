@@ -33,14 +33,14 @@ TicketEditViewModel.prototype.sync = function() { vmrLite.sync( this.container, 
 TicketEditViewModel.prototype.render = function() { vmrLite.render( this.container, this );};
 
 /**
- * Show the View. 
+ * open the View. 
  *
- * @method show
+ * @method open
  * @param container {String|DOMElement}
  */
 
-TicketEditViewModel.prototype.show = function (container) {
-    console.log('TicketEditViewModel show',container);
+TicketEditViewModel.prototype.open = function (container) {
+    console.log('TicketEditViewModel open',container);
     this.container = container;
     if (typeof this.container === 'string') { this.container = window.document.getElementById(this.container); }
 

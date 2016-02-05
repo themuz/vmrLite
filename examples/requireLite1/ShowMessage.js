@@ -17,15 +17,15 @@ function ShowMessage(config) {
       this.message = config.message;
 }
 
-ShowMessage.prototype.TEMPLATE = requireLite('./ShowMessage.html');
+ShowMessage.prototype.TEMPLATE = require('./ShowMessage.html');
 
 ShowMessage.prototype.render = function () {
     console.log('ShowMessage render');
     this.container.querySelector('#message').textContent = this.message;
 };
 
-ShowMessage.prototype.show = function (container) {
-    console.log('ShowMessage show',container);
+ShowMessage.prototype.open = function (container) {
+    console.log('ShowMessage open',container);
     this.container = container;
     if (typeof this.container === 'string') { this.container = window.document.getElementById(this.container); }
 
