@@ -12,13 +12,16 @@ Rendering is controlled by special attribute tags within the html.
 
 Similar in principle to knockout, but simpler plus you control when to render/sync.
 
-#### Documented with jsdoc :-
+#### Documentation :-
 
-Its documented, See .md OR on-line here [jsdoc vmrLite!](http://themuz.github.io/jsdoc/module-vmrLite.html).
+See this README.md OR jsdoc on-line here [jsdoc vmrLite!](http://themuz.github.io/jsdoc/module-vmrLite.html).
+
 
 #### Samples :-
 
-And samples basic and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
+Basic samples and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
+
+For a sample Base Class using vmrLite check out VMRBase.js
 
 #### Features :-
 

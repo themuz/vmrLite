@@ -2,7 +2,7 @@
 
 /**
 
-### Client (Browser) Implementation of require/CommonJS loader 
+### Client (Browser/js) Implementation of require/CommonJS loader 
 
 Browser/client emulation of CommonJS/node-js's syncronous module loader (require) library.
 
@@ -12,14 +12,13 @@ See nodejs's module loader for background information. (https://nodejs.org/docs/
 
 #### Supports js,css,html and json loadng.
 
-#### Documented with jsdoc :-
+#### Documentation :-
 
-Its documented, See .md OR on-line here [jsdoc requireLite!](http://themuz.github.io/jsdoc/module-requireLite.html).
+See this README.md OR jsdoc on-line here [jsdoc requireLite!](http://themuz.github.io/jsdoc/module-requireLite.html).
 
 #### Samples :-
 
 And samples basic and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
-
 
 #### Features :-
 - *cache* - Modules are cached after the first time they are loaded
@@ -240,7 +239,6 @@ function requireLite(url, callback) {
 
 
 /**
-
 
 Version of the library
 
