@@ -12,10 +12,12 @@ Rendering is controlled by special attribute tags within the html.
 
 Similar in principle to knockout, but simpler plus you control when to render/sync.
 
+
 #### Documentation :-
 
 See this README.md OR jsdoc on-line here [jsdoc vmrLite!](http://themuz.github.io/jsdoc/module-vmrLite.html).
 
+Also see the related project [themuz/requireLite](https://github.com/themuz/requireLite).
 
 #### Samples :-
 

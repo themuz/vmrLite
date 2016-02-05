@@ -16,6 +16,8 @@ See nodejs's module loader for background information. (https://nodejs.org/docs/
 
 See this README.md OR jsdoc on-line here [jsdoc requireLite!](http://themuz.github.io/jsdoc/module-requireLite.html).
 
+Also see the related project [themuz/vmrLite](https://github.com/themuz/vmrLite).
+
 #### Samples :-
 
 And samples basic and the standard "todo" app are here. [themuz GitHub io](http://themuz.github.io/).
