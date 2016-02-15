@@ -35,6 +35,7 @@ See this README.md OR jsdoc on-line here [jsdoc VMBase!](http://themuz.github.io
 
     SampleVM.prototype = Object.create(VMBase.prototype);
     SampleVM.prototype.constructor = SampleVM;
+    SampleVM.prototype.cwd = (require.cwd || ''); // VMBase requires the cwd, for deferred loading is using requireLite !!
 
     SampleVM.prototype.template = {  // Optional - used to dynamically load the VM partial html.
         div: null,  // div to clone for container.innerHTML
@@ -50,11 +51,12 @@ See this README.md OR jsdoc on-line here [jsdoc VMBase!](http://themuz.github.io
 
 function VMBase(config) {
     if (!(this instanceof VMBase)) { // If invoked as a factory by mistake
-        console.debug('VMBase: not called with new');
+        console.log('VMBase: not called with new');
         return new VMBase(config);
     }
     this._init(config);
 }
+
 
 /**
 
@@ -68,6 +70,8 @@ Version of the library
 
 
 VMBase.version = '0.1';
+VMBase.debug = false;
+
 
 /**
 
@@ -90,8 +94,6 @@ VMBase.prototype.template = {
     uri: null, 
     singleton: false,
     cssUri: null }; 
-
-
 
 VMBase.prototype.cwd = '';
 
@@ -136,7 +138,7 @@ VMBase.prototype._init = function (config) {
     // (Yes this.container may be null, this is ok, events are registered with addEventListeners within open)
     this.eventListeners.push( { elem: this.container, type: 'change', listener: this.onChange.bind(this) } );
 
-    console.log(this.className+'._init',this );
+    if ( VMBase.debug ) console.log(this.className+'._init',this );
 
     return this;
 };
@@ -161,7 +163,7 @@ VMBase.prototype._open = function (container) {
 
     if (container) this.container = container;
     if (typeof this.container === 'string') { this.container = document.getElementById(this.container); }
-    if (!this.container)  console.error(this.className+': container is null');
+    if (!this.container)  console.log(this.className+': ERROR: container is null');
     if (this.container.jquery) { this.container = this.container.get(0); } // Make it a DOM Element     
 
     this.container.setAttribute('className', this.className);
@@ -254,7 +256,7 @@ VMBase.prototype.addEventListeners = function () {
     var i,eListener;
     // bind events related to stuff on or outside container !!
     // Initalize other stuff.
-    console.log(this.className + '.addEventListeners', this.container);
+    if ( VMBase.debug ) console.log(this.className + '.addEventListeners', this.container);
 
     // target.addEventListener(type, listener[, useCapture]);
     for (i=0;i<this.eventListeners.length;i++) {
@@ -286,7 +288,7 @@ Calls removeEventListener for each element of eventListeners that is listening.
 
 VMBase.prototype.removeEventListeners = function () {
     var i,eListener,eTarget;    
-    console.log(this.className + '.removeEventListeners', this.container);
+    if ( VMBase.debug ) console.log(this.className + '.removeEventListeners', this.container);
 
     for (i=0;i<this.eventListeners.length;i++) {
         eListener = this.eventListeners[i];
@@ -408,7 +410,7 @@ VMBase.prototype._close = function () {
     // detach events related to stuff on or outside container !!
     // Clear contents etc...
     if ( !this._isopen ) throw new Error(this.className + ' is NOT open');
-    console.log(this.className + '._close',this);
+    if ( VMBase.debug ) console.log(this.className + '._close',this);
 
     this.removeEventListeners();
     // IMPORTANT if not emptying the container.
@@ -470,7 +472,7 @@ Simply a wrapper for vmrLite.triggerEvent where the container is this.container.
 */
 
 VMBase.prototype.trigger = function ( etype, detail ) {
-    console.log(this.className + '.trigger '+ etype);
+    if ( VMBase.debug ) console.log(this.className + '.trigger '+ etype);
     vmrLite.triggerEvent( this.container, etype, detail );
     return this;
 };
@@ -488,7 +490,7 @@ base implementation simply calls close();
 */
 
 VMBase.prototype.onClickClose  = function (ev) {
-    console.log(this.className + '.onClickClose');
+    if ( VMBase.debug ) console.log(this.className + '.onClickClose');
     this.close();
     ev.preventDefault(); ev.stopPropagation();
 };
@@ -512,7 +514,7 @@ VMBase.prototype.onChange = function(ev) {
 };
 
 // Export, if loaded as a nodejs style require
-if (typeof module !== 'undefined') {
+if (typeof(module) !== 'undefined') {
     module.exports = VMBase;
 }
 
