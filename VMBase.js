@@ -157,7 +157,7 @@ Open this view (Apply template, and render) in the container specified.
 */
 
 VMBase.prototype._open = function (container) {
-    var nodeList,i;
+    var nodeList,i,childDiv;
 
     if ( this._isopen ) throw new Error(this.className + ' is already open');
 
@@ -170,7 +170,7 @@ VMBase.prototype._open = function (container) {
     if (!this.container.id) this.container.id = this.id;
 
 
-    // load css from uri. 
+    // load css from uri. If defined and not already loaded. 
     if ( this.template && this.template.cssUri && !this.template.link ) {
         this.template.link = require(this.cwd + this.template.cssUri);
     }
@@ -180,16 +180,25 @@ VMBase.prototype._open = function (container) {
     }
 
     // clone template 
+    // 2016-04-03 Updated to clone the div content, not the div itself.
     if ( this.template && this.template.div ) {    
         vmrLite.empty(this.container); // Empty the container
+        // firstElementChild
         if ( this.template.singleton ) {
-            // Move Element, But keep track of templates parentElement so can put back
-            this.template.parentElement = this.template.div.parentElement;
-            this.template.parentElement.removeChild( this.template.div );
-            this.container.appendChild( this.template.div );        
+            // Move Element
+            childDiv = this.template.div.firstElementChild;
+            while ( childDiv ) {
+                this.template.div.removeChild( childDiv );
+                this.container.appendChild( childDiv );   
+                childDiv = this.template.div.firstElementChild;      
+            }    
         } else {
             // Clone
-            this.container.appendChild( this.template.div.cloneNode(true) );        
+            childDiv = this.template.div.firstElementChild;
+            while ( childDiv ) {
+                this.container.appendChild( childDiv.cloneNode(true) );   
+                childDiv = childDiv.nextElementSibling;      
+            }
         }
     }        
 
@@ -407,6 +416,7 @@ empty the container (if cloned from template)
 */
 
 VMBase.prototype._close = function () {
+    var childDiv;
     // detach events related to stuff on or outside container !!
     // Clear contents etc...
     if ( !this._isopen ) throw new Error(this.className + ' is NOT open');
@@ -426,14 +436,19 @@ VMBase.prototype._close = function () {
     // Clear the contents, if we used a template. So nodes are freeed up.
     if ( this.template.div ) {
         if ( this.template.singleton ) {
-            // Move Element back to original parentElement 
-            this.container.removeChild( this.template.div );
-            this.template.parentElement.appendChild( this.template.div );        
+            // Move Element back to original div 
+            childDiv = this.container.firstElementChild;
+            while ( childDiv ) {
+                this.container.removeChild( childDiv );
+                this.template.div.appendChild( childDiv );   
+                childDiv = this.container.firstElementChild;       
+            }      
         } else {
             // Delete contents
             vmrLite.empty(this.container);    
         }
     }
+    this._isopen = false;
 
 
     return this;
