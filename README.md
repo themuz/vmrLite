@@ -1,6 +1,6 @@
 ### Render Object (View Model) within a html element.
 
-Render (associate) DOM elements with a JavaScript (view model) object. 
+Render (associate) DOM elements with a JavaScript (view model) object.
 Rendering is controlled by special attribute tags within the html.
 
 Similar in principle to knockout, but simpler plus you control when to render/sync.
@@ -26,15 +26,15 @@ For a sample Base Class using vmrLite check out VMRBase.js
 - sync input elements back
 - supports repeating elements (e.g arrays) (see vm-each) to clone/create dom nodes.
 - include in your page. or load as a AMD module (see require.js)
-- NO dependencies. 
-- Add your own DOM extensions. 
+- NO dependencies.
+- Add your own DOM extensions.
 - sync/render when you want (NOT when framework thinks you should)
 - on-events read as if the old way. eventListeners are handed for you.
 
-#### Available Attributes at each DOM Element. 
+#### Available Attributes at each DOM Element.
 
 vmrLite uses special attributes prefixed with "vm" (view model) to control dom/js mapping.
-The attributes value represent an expression (typically just a property) of the object to evaluate. 
+The attributes value represent an expression (typically just a property) of the object to evaluate.
 
 Below are the core/common items (vm-tagname) attributes
 
@@ -50,10 +50,10 @@ Below are the core/common items (vm-tagname) attributes
 - **attr**-_name_ - Set the attribute _name_ to result of value-exp
 - **data**-_name_ - Set the data-_name_ attribute to result of value-exp
 - **debug** - Dump a debug message, console.log the value-exp result.
-- **disabled** - Set/Clear the elements disabled property AND css-class, based on truthy of value-exp 
-- **readonly** - Set/Clear the elements readonly property AND css-class, based on truthy of value-exp 
-- **required** - Set/Clear the elements required property AND css-class, based on truthy of value-exp 
-- **selected** - Set/Clear the elements selected property AND css-class, based on truthy of value-exp 
+- **disabled** - Set/Clear the elements disabled property AND css-class, based on truthy of value-exp
+- **readonly** - Set/Clear the elements readonly property AND css-class, based on truthy of value-exp
+- **required** - Set/Clear the elements required property AND css-class, based on truthy of value-exp
+- **selected** - Set/Clear the elements selected property AND css-class, based on truthy of value-exp
 - **more** - For full details, see the documentation (or read the code, its only ~100 lines!!)
 - **custom** - Add your own. Just create a function. e.g `vmrLite.tagFns['myslide'] = function (tag,elem,viewModel) { ... }`
 
@@ -113,7 +113,7 @@ js
 
 
     function TicketsViewModel(config) {
-        "use strict";   
+        "use strict";
         this.container = null;
         this.tickets = [
             { name: "Economy", code: "E", price: 199.95 },
@@ -124,10 +124,10 @@ js
         // Add sync/render for convenience
         this.sync = function() { vmrLite.sync( this.container, this ); };
         this.render = function() { vmrLite.render( this.container, this ); };
-        this.open = function(container) { 
+        this.open = function(container) {
             this.container = container;
             vmrLite.render( this.container, this );
-        };  
+        };
         // Instance functions to handle events
         this.getChosenTicketDetails = function () {
             if ( !this.chosenTicketCode ) return null;
@@ -155,5 +155,3 @@ index.html
     2016-02-04 renamed the free variable (with expression evaluation) from "vm" -> "root"
     2016-02-04 removed module.__dirname as in-consistent with CommonJS (use require.cwd as a replacement)
 
-#### TODO
-- Enhance evalWith, to look for plain properties, before using the more complex evaluation using "new Function"
