@@ -1,13 +1,13 @@
 /* jshint globalstrict: true */
 "use strict";
 
-/* global window, console, document, module */
+/* global window, console, document, module, performance */
 
 /**
 
 ### Render Object (View Model) within a html element.
 
-Render (associate) DOM elements with a JavaScript (view model) object. 
+Render (associate) DOM elements with a JavaScript (view model) object.
 Rendering is controlled by special attribute tags within the html.
 
 Similar in principle to knockout, but simpler plus you control when to render/sync.
@@ -33,15 +33,15 @@ For a sample Base Class using vmrLite check out VMRBase.js
 - sync input elements back
 - supports repeating elements (e.g arrays) (see vm-each) to clone/create dom nodes.
 - include in your page. or load as a AMD module (see require.js)
-- NO dependencies. 
-- Add your own DOM extensions. 
+- NO dependencies.
+- Add your own DOM extensions.
 - sync/render when you want (NOT when framework thinks you should)
 - on-events read as if the old way. eventListeners are handed for you.
 
-#### Available Attributes at each DOM Element. 
+#### Available Attributes at each DOM Element.
 
 vmrLite uses special attributes prefixed with "vm" (view model) to control dom/js mapping.
-The attributes value represent an expression (typically just a property) of the object to evaluate. 
+The attributes value represent an expression (typically just a property) of the object to evaluate.
 
 Below are the core/common items (vm-tagname) attributes
 
@@ -57,10 +57,10 @@ Below are the core/common items (vm-tagname) attributes
 - **attr**-_name_ - Set the attribute _name_ to result of value-exp
 - **data**-_name_ - Set the data-_name_ attribute to result of value-exp
 - **debug** - Dump a debug message, console.log the value-exp result.
-- **disabled** - Set/Clear the elements disabled property AND css-class, based on truthy of value-exp 
-- **readonly** - Set/Clear the elements readonly property AND css-class, based on truthy of value-exp 
-- **required** - Set/Clear the elements required property AND css-class, based on truthy of value-exp 
-- **selected** - Set/Clear the elements selected property AND css-class, based on truthy of value-exp 
+- **disabled** - Set/Clear the elements disabled property AND css-class, based on truthy of value-exp
+- **readonly** - Set/Clear the elements readonly property AND css-class, based on truthy of value-exp
+- **required** - Set/Clear the elements required property AND css-class, based on truthy of value-exp
+- **selected** - Set/Clear the elements selected property AND css-class, based on truthy of value-exp
 - **more** - For full details, see the documentation (or read the code, its only ~100 lines!!)
 - **custom** - Add your own. Just create a function. e.g `vmrLite.tagFns['myslide'] = function (tag,elem,viewModel) { ... }`
 
@@ -120,7 +120,7 @@ js
 
 
     function TicketsViewModel(config) {
-        "use strict";   
+        "use strict";
         this.container = null;
         this.tickets = [
             { name: "Economy", code: "E", price: 199.95 },
@@ -131,10 +131,10 @@ js
         // Add sync/render for convenience
         this.sync = function() { vmrLite.sync( this.container, this ); };
         this.render = function() { vmrLite.render( this.container, this ); };
-        this.open = function(container) { 
+        this.open = function(container) {
             this.container = container;
             vmrLite.render( this.container, this );
-        };  
+        };
         // Instance functions to handle events
         this.getChosenTicketDetails = function () {
             if ( !this.chosenTicketCode ) return null;
@@ -162,8 +162,6 @@ index.html
     2016-02-04 renamed the free variable (with expression evaluation) from "vm" -> "root"
     2016-02-04 removed module.__dirname as in-consistent with CommonJS (use require.cwd as a replacement)
 
-#### TODO
-- Enhance evalWith, to look for plain properties, before using the more complex evaluation using "new Function"
 
 @module vmrLite
 
@@ -174,6 +172,29 @@ index.html
 var $eid = function (id) { return this.getElementById(id); }.bind(window.document);
 
 var vmrLite = {};
+
+vmrLite.profile = {
+    render : { n : 0, t: 0 },
+    'vm-each' : null,
+    'vm-with' : null,
+    'vm-*' : null,
+};
+
+
+// Start profile timings
+vmrLite.p_start = function(fname) {
+    if ( !vmrLite.profile[fname] ) vmrLite.profile[fname] = { n : 0, t: 0 };
+    return { fname: fname,  ts: performance.now() };
+};
+
+
+vmrLite.p_end = function(startObj) {
+    vmrLite.profile[startObj.fname].n += 1;
+    vmrLite.profile[startObj.fname].t += (performance.now()-startObj.ts);
+};
+
+
+
 
 if (!String.prototype.compare) {
     String.prototype.compare = function (b) { return (this < b) ? -1 : (this === b) ? 0 : 1; };
@@ -202,11 +223,11 @@ Version of the library
 @field
 @memberof module:vmrLite
 @type String
-@default "0.4"
+@default "0.5"
 
 */
 
-vmrLite.version = '0.4';
+vmrLite.version = '0.5';
 
 /*
 
@@ -299,26 +320,37 @@ TODO: Remove assigning null;s
 @return {Object} result of evaluation.
 
 */
+vmrLite.fnCache = {};
 
 vmrLite.evalWith = function (expr, withObj, viewModelObj, index) {
+    // profile: Approx 24% (80% without cache)
     var fn,retval,thisObj,thisExpr;
-    // return withObj[expr];
-    // 2016-01-20 Renamed "vm" to "root" as more of a generic name 
-    fn = new Function(['root', 'index'], 'with ( root ) { with ( this ) { return ' + expr + ' }}' );
+
+    var start=vmrLite.p_start('evalWith');
+
+    // 2016-01-20 Renamed "vm" to "root" as more of a generic name
+    fn = vmrLite.fnCache[expr];
+    if ( !fn ) {
+        fn = new Function(['root', 'index'], 'with ( root ) { with ( this ) { return ' + expr + ' }}' );
+        vmrLite.fnCache[expr] = fn;
+    }
     try {
         retval = fn.call(withObj, viewModelObj, index);
         if ( typeof(retval) === 'function' ) {
-            // 2016-01-20 Bind the function to its "this" object (or this==withObj), Was by default bound to the viewModelObj
-            // If not explicitly defined. Assume is the viewModelObj (or this==withObj)
+            // By default bind the function to the viewModelObj.
+            // I don't like this as should be the withObj (aka this) (not viewModelObj aka root) but too late? to change.
+            // as this is the level where you typically define event handlers.
             thisObj = viewModelObj;
-            thisExpr = expr.replace(/\.[^\.]*$/,''); // this.fname => this 
-            if ( thisExpr != expr ) { 
-                // We do a an expression of the form "object.fname" 
+            // This can be overridden by explicitly declaring the function as this.fname or root.fname
+            thisExpr = expr.replace(/\.[^\.]*$/,''); // this.fname => this, root.fname => root etc..
+            if ( thisExpr != expr && thisExpr != 'root' ) {
+                // Find the object to bind to.
                 thisObj = vmrLite.evalWith(thisExpr,withObj,viewModelObj,index);
             }
             retval = retval.bind( thisObj );
         }
         if (retval && retval.toISOString) { retval = vmrLite.stripZeroTime(retval.toISOString()); }
+         vmrLite.p_end(start);
 
         return retval;
     } catch (ex) {
@@ -344,7 +376,7 @@ Assign "value" to the "expr" within scope of withObj and viewModel.
 */
 vmrLite.assignWith = function (value, expr, withObj, viewModelObj, index) {
     var fn;
-    fn = new Function(['value', 'vm', 'index'], 'with ( vm ) { with ( this ) { ' + expr + ' = value }}');
+    fn = new Function(['value', 'root', 'index'], 'with ( root ) { with ( this ) { ' + expr + ' = value }}');
     try {
         return fn.call(withObj, value, viewModelObj, index);
     } catch (ex) {
@@ -356,11 +388,12 @@ vmrLite.assignWith = function (value, expr, withObj, viewModelObj, index) {
 
 
 /**
- Helper.  Find the closest Element, up the DOM tree from el, with anattribute of index. and return its index (as a Number)
+ Helper.  Find the closest Element, up the DOM tree from el, with an attribute of index.
+ and return its index (as a Number)
 
 @function
 @memberof module:vmrLite
-@param elem {HTMLElement}  
+@param elem {HTMLElement}
 @param el {Element} Element to search up from
 @return {Number} Value of 'index' attribute.
 */
@@ -408,6 +441,7 @@ vmrLite.deleteEachElem = function (delElem) {
     index = parseInt(index, 10);
     // delElem.style.display='none'; // Hide it
 
+    delElem.setAttribute('index', '-1234'); // Mark as being deleted
     nextElem = delElem.nextElementSibling;
     while (nextElem && (nextElem.getAttribute('index') === String(index + 1))) {
         nextElem.setAttribute('index', String(index)); // Change index
@@ -443,7 +477,7 @@ vmrLite.buildEach = function (elem, withObj, viewModelObj, index) {
     var i, len = 0,
         eachExpr, eachArraylike,
         nextElem, newElem, parentElement;
-        
+
     eachExpr = elem.getAttribute('vm-each');
     // console.log('vm-each ' + elem.tagName + '-' + eachExpr );
 
@@ -524,7 +558,7 @@ A tag is expressed as vm-tagname-param="value-expr" in the html
 @memberof module:vmrLite
 @protected
 @param tag {Object} Details of the attribute tag. tag is expressed as vm-tagname-param="value-expr"
-@param tag.name {String} Tag Name 
+@param tag.name {String} Tag Name
 @param tag.param {String} Param (or blank string)
 @param tag.value {String} The value-expr
 @param tag.result {Object} Result of evaluating "value-expr"
@@ -548,7 +582,15 @@ If the result is text, use vm-text. as html is NOT escaped.
 
 */
 vmrLite.tagFns.html = function (tag, elem) {
+    // This takes approx 20% of the render time in Windows. !!!
+    // By taking a copy and comparing, this drops to 4%
+    if ( tag.result && tag.result.length < 512 )
+        if ( elem.cp_html && elem.cp_html == tag.result)
+            return;
+
     elem.innerHTML = tag.result;
+    if ( tag.result && tag.result.length < 512 )
+        elem.cp_html = tag.result;
 };
 
 
@@ -564,7 +606,14 @@ vm-text="expr" => elem.textContent = tag.result
 @param elem {Element} HTML element containing attribute tag
 */
 vmrLite.tagFns.text = function (tag, elem) {
+    // This fn takes approx 40% of the render time in Windows. !!!
+    // By taking a copy and comparing, this drops to 10%
+    if ( tag.result && tag.result.length < 512 )
+        if ( elem.cp_text && elem.cp_text == tag.result)
+            return;
     elem.textContent = tag.result; // (IE=innerText) IE9+ ok
+    if ( tag.result && tag.result.length < 512 )
+        elem.cp_text = tag.result;
 };
 
 /**
@@ -592,9 +641,11 @@ Set the textContent property of the element with non-breaking spaces.
 @param elem {Element} HTML element containing attribute tag
 */
 vmrLite.tagFns.nbtext = function (tag, elem) {
-    elem.textContent = String(tag.result).
+    var nbresult = String(tag.result).
         replace(/\-/g,'\u2011').
         replace(/\ /g,'\u00A0');
+    elem.textContent = nbresult;
+
 };
 
 
@@ -648,6 +699,7 @@ vm-value="expr" => elem.value=tag.result
 @param elem {Element} HTML element containing attribute tag
 */
 vmrLite.tagFns.value = function (tag, elem) {
+    // profile. Approx 15%
     if (elem.type === 'checkbox') {
         elem.checked = !!tag.result;
     } else if (elem.type === 'radio') {
@@ -716,7 +768,7 @@ vmrLite.tagFns.attr = function (tag, elem) {
 /**
 Set the elements dataset/data-attribute as defined by the tag parameter  (see tagFns for details).
 
-NOTE: setAttribute (vs dataset) is used internally since faster in IE !!. 
+NOTE: setAttribute (vs dataset) is used internally since faster in IE !!.
 
 vm-attr-param="expr" => elem.setAttribute('data-'+tag.param,tag.result);
 
@@ -733,7 +785,7 @@ vmrLite.tagFns.data = function (tag, elem) {
 };
 
 /**
-Dump a debug message the "tag.result" to the console, 
+Dump a debug message the "tag.result" to the console,
 
 
 @function
@@ -1087,12 +1139,14 @@ Child elements are rendered, unless element is itself a container for another re
 
 // Render this object(withObj), inside elem, and bind any events.
 vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
-    var aAttrs, attr, attrMatch,
+    var aAttrs, attr, attrSplit,vmAttrTags,
         parseChildIst, parseChildren,
-        i, tagFn, tag, attrValue;
+        i, tagFn, tag, attrValue,
+        start, tstart;
+
     if (elem.jquery) { elem = elem.get(0); } // Want plain elem (not jQuery)
 
-    var vmID = elem.getAttribute('vm-container'); 
+    var vmID = elem.getAttribute('vm-container');
     // Don't go deeper if, this is another objects container !! but DO if me.
     // MS: 2015-03-11 bug fix. If optimize and render same object
     // on a inner element (for speed) it will get a vm-container as well.
@@ -1126,15 +1180,20 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
         //    console.error('Internal validation with each');
         //    return;
         // }
+        start=vmrLite.p_start('vm-each');
+
         if (!vmrLite.buildEach(elem, withObj, viewModelObj, index)) {
             return; // No-elements nothing to do.
         }
+        vmrLite.p_end(start);
         // Drop thru, and process the with.
-        return; // vm-each special and is ALWAYS hidden return. vm-withs will of been created.
+        return; // vm-each special and is ALWAYS hidden return. vm-withs will of been created. below.
     }
     // Process with
     attrValue = elem.getAttribute('vm-with');
     if (attrValue) {
+        start=vmrLite.p_start('vm-with');
+
         withObj = vmrLite.evalWith(attrValue, withObj, viewModelObj, index); // index is the parent index??
         // console.log('vm-with ' + attrValue + ' result= ' + JSON.stringify(withObj) );
         if (!withObj) {
@@ -1155,35 +1214,56 @@ vmrLite.renderElement = function (elem, withObj, viewModelObj, index) {
                 withObj = withObj.item(index);
             }
         }
+        vmrLite.p_end(start);
+
     }
 
-    // process basic attributes, within the withObj.
-    aAttrs = elem.attributes; // Below may add/remove attributes. DONT cache length !!!
+
+
+    // get vm- attributes
+    vmAttrTags=[];
+    start=vmrLite.p_start('get-attributes');
+    aAttrs = elem.attributes; // Below may add/remove attributes.
     for (i = 0; i < aAttrs.length; i++) {
         attr = aAttrs.item(i);
         if (attr) {
-            attrMatch = attr.name.match(/^vm-([^\-]*)-?(.*)/);
-            if (attrMatch && (attrMatch[1] !== 'with') && (attrMatch[1] !== 'each') && (attrMatch[1] !== 'root')) {
-                tag = {};
-                tag.name = attrMatch[1];
-                tag.param = attrMatch[2];
-                tag.value = aAttrs.item(i).value;
-                tag.result = vmrLite.evalWith(tag.value, withObj, viewModelObj, index);
-                if (typeof tag.result === 'undefined') { tag.result = '(?)'; }
-                // 2016-01-03 bug fix, as double wrapping and should be bound to withObj (not viewModelObj)
-                // 2016-01-16 Change back to view model. As event function should be defined at the view model level..
-                // 2016-01-20 Moved bind. to the evalWith. and changed back to use the withObj
-
-                tagFn = vmrLite.tagFns[tag.name];
-                if (!tagFn) {
-                    console.error('You have a typo with vm-' + tag.name + ' in ' + elem.tagName);
-                    return;
-                }
-                tagFn(tag, elem);
+            attrSplit = attr.name.split('-');
+            if ((attrSplit[0] == 'vm') && (attrSplit[1] !== 'with') && (attrSplit[1] !== 'each') && (attrSplit[1] !== 'root')) {
+                vmAttrTags.push({
+                    name: attrSplit[1],
+                    param: attrSplit[2],
+                    value: attr.value
+                });
             }
         }
     }
+    vmrLite.p_end(start);     // ~15%
+
+
+    start=vmrLite.p_start('vm-*');
+    for (i = 0; i < vmAttrTags.length; i++) {
+        tag = vmAttrTags[i];
+        tag.result = vmrLite.evalWith(tag.value, withObj, viewModelObj, index);
+
+        if (typeof tag.result === 'undefined') { tag.result = '(?)'; }
+        // 2016-01-03 bug fix, as double wrapping and should be bound to withObj (not viewModelObj)
+        // 2016-01-16 Change back to view model. As event function should be defined at the view model level..
+        // 2016-01-20 Moved bind. to the evalWith. and changed back to use the withObj
+
+        tagFn = vmrLite.tagFns[tag.name];
+        if (!tagFn) {
+            console.error('You have a typo with vm-' + tag.name + ' in ' + elem.tagName);
+            return;
+        }
+
+        tstart=vmrLite.p_start('vm-'+tag.name);
+        tagFn(tag, elem);
+        vmrLite.p_end(tstart);
+
+    }
+    vmrLite.p_end(start);  // ~54% (31% evalWith), 23% other
     if (!parseChildIst && parseChildren) { vmrLite.renderChildren(elem, withObj, viewModelObj, index); }
+
 
 };
 
@@ -1200,19 +1280,20 @@ i.e View Model ===> DOM
 */
 
 vmrLite.render = function (containerElement, viewModelObj) {
+    var start=vmrLite.p_start('render');
+
     var tag, after, vmID;
     vmrLite.afterRenderApply = []; // Array of { fn: function , args: argsArray } to call after render complete
     // console.log('render ' + containerElement.id );
 
     if (containerElement.jquery) { containerElement = containerElement.get(0); } // Want plain elem (not jQuery)
-
     if (!viewModelObj) {
         containerElement.style.display = 'none';
         return;
-    }    
+    }
 
-    vmID = containerElement.getAttribute('vm-container'); 
-    // This is the main render call, (or a inner call called manually to optimize rendering). 
+    vmID = containerElement.getAttribute('vm-container');
+    // This is the main render call, (or a inner call called manually to optimize rendering).
     // vmID MUST match the viewModelObj.id/_id
     if ( !vmID || (( vmID != viewModelObj.id ) && ( vmID != viewModelObj._id ))) {
         // Update id. As application has explicitley rendered here !!
@@ -1220,13 +1301,13 @@ vmrLite.render = function (containerElement, viewModelObj) {
         // NOTE: To stop an outer view model, from attempting to render a inner Viewmodel set vm-container="" on the inner
         vmID = viewModelObj.id;
         if (!vmID) {
-            vmID = viewModelObj._id; 
+            vmID = viewModelObj._id;
             if (!vmID) {
-                vmID = vmrLite.SEQ++; 
+                vmID = vmrLite.SEQ++;
                 viewModelObj._id = vmID;
             }
         }
-        containerElement.setAttribute('vm-container', String(vmID));        
+        containerElement.setAttribute('vm-container', String(vmID));
     }
 
     vmrLite.renderChildren(containerElement, viewModelObj, viewModelObj, null);
@@ -1236,6 +1317,9 @@ vmrLite.render = function (containerElement, viewModelObj) {
         after.fn.apply(this, after.args);
     }
     vmrLite.afterRenderApply = []; // Reinit.
+    vmrLite.p_end(start);
+
+    console.log('render - ' + containerElement.id + ' '+  String((performance.now()-start.ts)) + 'ms');
 };
 
 /*
@@ -1279,7 +1363,7 @@ vmrLite.syncElement = function (elem, withObj, viewModelObj, index) {
     var aAttrs, attr, i, attrValue, parseChildren,
         val, expr;
 
-    var vmID = elem.getAttribute('vm-container'); 
+    var vmID = elem.getAttribute('vm-container');
     // Don't go deeper if, this is another objects container !! but DO if me.
     // MS: 2015-03-11 bug fix. If optimize and render same object
     // on a inner element (for speed) it will get a vm-container as well.
@@ -1304,7 +1388,7 @@ vmrLite.syncElement = function (elem, withObj, viewModelObj, index) {
             } else { // assume is .item(idx)  TODO: try .data as next alternative.
                 withObj = withObj.item(index);
             }
-                
+
         }
     }
     // process  attributes, within the withObj.
@@ -1313,10 +1397,10 @@ vmrLite.syncElement = function (elem, withObj, viewModelObj, index) {
         attr = aAttrs.item(i);
         if (attr) {
             if (attr.name === 'vm-value') {
-                val = elem.value; // By default, use its value. 
-                if ( elem.type === 'checkbox' ) {  
+                val = elem.value; // By default, use its value.
+                if ( elem.type === 'checkbox' ) {
                     if ( !elem.checked ) val = null; // Not checked, value is null.
-                } else if ( elem.type === 'radio' ) {  
+                } else if ( elem.type === 'radio' ) {
                     // todo: bug fix, if NO items are checked val should be nil. (not left unassigned)
                     if ( !elem.checked ) val = undefined; // Not checked, value is undefined
                 }
@@ -1356,7 +1440,7 @@ vmrLite.sync = function (containerElement, viewModelObj) {
 
  Helper.  Clear the elem.on events, on the element and those of the children.
 
-Call to free/clear any references from Dom nodes to your fns. 
+Call to free/clear any references from Dom nodes to your fns.
 Alternatively use vmrLite.clear.
 
 @function
@@ -1406,7 +1490,7 @@ vmrLite.clearOnEventsChildren = function (elem) {
 Also clears any events on element and children before clearing.
 See also clearOnEventsChildren
 
-Call to free/clear any references from Dom nodes to your fns. 
+Call to free/clear any references from Dom nodes to your fns.
 
 @function
 @memberof module:vmrLite
@@ -1414,10 +1498,12 @@ Call to free/clear any references from Dom nodes to your fns.
 */
 
 vmrLite.empty = function (containerElement) {
+
+
     if (containerElement.jquery) { containerElement = containerElement.get(0); } // Want plain elem (not jQuery)
     // console.log('EMPTY ' + containerElement.id + ' ' + containerElement.href, containerElement);
 
-    vmrLite.clearOnEventsChildren(containerElement); // MS: BUG fix, was clearOnEventsChildren, BUT Need to clear the onEvent at this node. 
+    vmrLite.clearOnEventsChildren(containerElement); // MS: BUG fix, was clearOnEventsChildren, BUT Need to clear the onEvent at this node.
     // MS: Changed back, Dont think on review you should call clearOnEventsElement as we dont render the container div. Only the children !!
     while (containerElement.firstChild) {
       containerElement.removeChild(containerElement.firstChild);
@@ -1425,6 +1511,25 @@ vmrLite.empty = function (containerElement) {
     //containerElement.innerHTML = '';
 };
 
+
+
+vmrLite.p = function(zeroIt) {
+    var total=vmrLite.profile.render.t;
+    for (var k in vmrLite.profile ) {
+        vmrLite.profile[k].a = vmrLite.profile[k].t / vmrLite.profile[k].n;
+        vmrLite.profile[k].p = Math.floor(vmrLite.profile[k].t*100 / total);
+    }
+    if ( zeroIt ) {
+        for (k in vmrLite.profile ) {
+            vmrLite.profile[k].n = 0;
+            vmrLite.profile[k].t = 0;
+            delete vmrLite.profile[k].a;
+            delete vmrLite.profile[k].p;
+        }
+
+    }
+    console.log(JSON.stringify(vmrLite.profile,null,'\t'));
+};
 
 
 if (typeof(module) !== 'undefined') {
