@@ -31,6 +31,8 @@ For a sample Base Class using vmrLite check out VMRBase.js
 - sync/render when you want (NOT when framework thinks you should)
 - on-events read as if the old way. eventListeners are handed for you.
 
+- testing push changes
+
 #### Available Attributes at each DOM Element.
 
 vmrLite uses special attributes prefixed with "vm" (view model) to control dom/js mapping.
